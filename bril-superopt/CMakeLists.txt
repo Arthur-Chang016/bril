@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.10)  # Minimum version of CMake required
+cmake_minimum_required(VERSION 3.14)  # Minimum version of CMake required
 
 # Project name, version, and language
 project(bril-superopt
@@ -26,6 +26,13 @@ target_include_directories(${PROJECT_NAME}
     PRIVATE
         ${PROJECT_SOURCE_DIR}/include
 )
+
+include(FetchContent)
+
+FetchContent_Declare(json URL https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz)
+FetchContent_MakeAvailable(json)
+
+target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 
 # Optionally, you can link libraries if needed
 # target_link_libraries(${PROJECT_NAME} PRIVATE some_library)
