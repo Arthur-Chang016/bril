@@ -1,6 +1,8 @@
 #ifndef IR_PROGRAM_H
 #define IR_PROGRAM_H
 
+#include <memory>
+
 namespace ir {
 
 class Program {
@@ -8,6 +10,8 @@ class Program {
     Program();
     ~Program();
 };
+
+using ProgramPtr = std::shared_ptr<Program>;
 
 }  // namespace ir
 
