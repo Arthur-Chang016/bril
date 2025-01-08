@@ -10,8 +10,9 @@ namespace ir {
 
 ProgramPtr parse(std::istream& input) {
     json progJson = json::parse(input);
-    std::cout << progJson.dump(4) << std::endl;
+    // std::cout << progJson.dump(4) << std::endl;
     auto program = std::make_shared<Program>(progJson);
+    program->print(std::cout);
     return program;
 }
 

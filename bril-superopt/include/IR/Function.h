@@ -16,6 +16,7 @@ class Function {
    public:
     Function(const json& funcJson);
     ~Function() = default;
+    void print(std::ostream& os) const;
 
    private:
     std::string name;

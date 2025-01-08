@@ -15,6 +15,7 @@ class Program {
    public:
     Program(const json& progJson);
     ~Program() = default;
+    void print(std::ostream& os) const;
 
    private:
     std::vector<FunctionPtr> functions;

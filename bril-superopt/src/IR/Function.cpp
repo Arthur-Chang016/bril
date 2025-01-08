@@ -4,6 +4,7 @@
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
+#include <iostream>
 #include <memory>
 
 namespace ir {
@@ -12,9 +13,9 @@ TypePtr ParseType(const json& typeJson) {
     if (typeJson.is_string()) {
         std::string type = typeJson;
         if (type == "int")
-            return IntTypePtr();
+            return std::make_shared<IntType>();
         else if (type == "bool")
-            return BoolTypePtr();
+            return std::make_shared<BoolType>();
         else
             throw std::runtime_error("Unknown type: " + type);
     } else if (typeJson.is_object()) {
@@ -27,6 +28,7 @@ TypePtr ParseType(const json& typeJson) {
 
 Function::Function(const json& funcJson) {
     if (!funcJson.contains("name")) throw std::runtime_error("funcJson does not contain 'name'");
+    this->name = funcJson["name"];
     if (!funcJson.contains("instrs")) throw std::runtime_error("funcJson does not contain 'instrs'");
 
     if (funcJson.contains("args")) {
@@ -56,6 +58,31 @@ Function::Function(const json& funcJson) {
     //         currentBlock = std::make_shared<BasicBlock>();
     //     }
     // }
+}
+
+void Function::print(std::ostream& os) const {
+    os << "@" << this->name;
+    if (this->args.size() > 0) {
+        os << "(";
+        for (size_t i = 0; i < this->args.size(); i++) {
+            this->args[i]->print(os);
+            if (i < this->args.size() - 1)
+                os << ", ";
+        }
+        os << ")";
+    }
+    if (this->retType)
+        this->retType->print(os << ": ");
+
+    // TODO
+    // print basic blocks
+    os << " {\n";
+    // for (const auto& bb : this->BBs) {
+    //     os << "  ";
+    //     bb->print(os);
+    //     os << "\n";
+    // }
+    os << "}\n";
 }
 
 }  // namespace ir
