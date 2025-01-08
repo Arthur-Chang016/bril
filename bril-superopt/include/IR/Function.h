@@ -2,6 +2,7 @@
 #define IR_FUNCTION_H
 
 #include <IR/BasicBlock.h>
+#include <IR/Instruction.h>
 
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
@@ -18,9 +19,9 @@ class Function {
 
    private:
     std::string name;
+    std::vector<VarPtr> args;
     std::vector<BBPtr> BBs;
-    // TODO return type
-    // TODO args
+    TypePtr retType = nullptr;
 };
 
 using FunctionPtr = std::shared_ptr<Function>;
