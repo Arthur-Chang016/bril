@@ -9,10 +9,10 @@ using json = nlohmann::json;
 namespace ir {
 
 ProgramPtr parse(std::istream& input) {
-    json j = json::parse(input);
-    std::cout << j.dump(4) << std::endl;
-    // auto program = std::make_shared<Program>(j);
-    return nullptr;
+    json progJson = json::parse(input);
+    std::cout << progJson.dump(4) << std::endl;
+    auto program = std::make_shared<Program>(progJson);
+    return program;
 }
 
 }  // namespace ir

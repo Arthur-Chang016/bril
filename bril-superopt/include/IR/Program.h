@@ -1,14 +1,23 @@
 #ifndef IR_PROGRAM_H
 #define IR_PROGRAM_H
 
+#include <IR/Function.h>
+
 #include <memory>
+#include <nlohmann/json_fwd.hpp>
+#include <string>
+#include <vector>
+using json = nlohmann::json;
 
 namespace ir {
 
 class Program {
    public:
-    Program();
-    ~Program();
+    Program(const json& progJson);
+    ~Program() = default;
+
+   private:
+    std::vector<FunctionPtr> functions;
 };
 
 using ProgramPtr = std::shared_ptr<Program>;
