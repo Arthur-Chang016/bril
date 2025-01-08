@@ -17,11 +17,10 @@ Program::Program(const json& progJson) {
     }
 }
 
-void Program::print(std::ostream& os) const {
-    for (const auto& function : functions) {
-        function->print(os);
-        os << std::endl;
-    }
+std::ostream& operator<<(std::ostream& os, const Program& prog) {
+    for (const auto& func : prog.functions)
+        os << *func << std::endl;
+    return os;
 }
 
 }  // namespace ir

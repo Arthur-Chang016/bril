@@ -60,29 +60,30 @@ Function::Function(const json& funcJson) {
     // }
 }
 
-void Function::print(std::ostream& os) const {
-    os << "@" << this->name;
-    if (this->args.size() > 0) {
+std::ostream& operator<<(std::ostream& os, const Function& func) {
+    os << "@" << func.name;
+    if (func.args.size() > 0) {
         os << "(";
-        for (size_t i = 0; i < this->args.size(); i++) {
-            this->args[i]->print(os);
-            if (i < this->args.size() - 1)
+        for (size_t i = 0; i < func.args.size(); i++) {
+            os << *func.args[i];
+            if (i < func.args.size() - 1)
                 os << ", ";
         }
         os << ")";
     }
-    if (this->retType)
-        this->retType->print(os << ": ");
+    if (func.retType)
+        os << ": " << *func.retType;
 
     // TODO
     // print basic blocks
     os << " {\n";
-    // for (const auto& bb : this->BBs) {
+    // for (const auto& bb : func.BBs) {
     //     os << "  ";
     //     bb->print(os);
     //     os << "\n";
     // }
     os << "}\n";
+    return os;
 }
 
 }  // namespace ir
