@@ -1,15 +1,20 @@
 #ifndef IR_INSTRUCTION_H
 #define IR_INSTRUCTION_H
 
+#include <memory>
+
 namespace ir {
 
 class Instruction {
    public:
-    Instruction();
-    virtual ~Instruction();
+    Instruction() = default;
+    virtual ~Instruction() = default;
 
-    // Add member functions and data members here
+    // Add pure virtual member functions here
+    virtual void execute() = 0;
 };
+
+using InstPtr = std::shared_ptr<Instruction>;
 
 }  // namespace ir
 

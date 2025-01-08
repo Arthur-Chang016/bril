@@ -1,6 +1,8 @@
 #ifndef IR_FUNCTION_H
 #define IR_FUNCTION_H
 
+#include <IR/BasicBlock.h>
+
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
@@ -14,10 +16,11 @@ class Function {
     Function(const json& funcJson);
     ~Function() = default;
 
-    // Add member functions and variables here
-
    private:
-    // Add private member functions and variables here
+    std::string name;
+    std::vector<BBPtr> BBs;
+    // TODO return type
+    // TODO args
 };
 
 using FunctionPtr = std::shared_ptr<Function>;
