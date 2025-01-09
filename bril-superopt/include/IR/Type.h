@@ -49,6 +49,9 @@ using PointerTypePtr = std::shared_ptr<PointerType>;
 
 class Variable {
    public:
+    std::string name;
+    TypePtr type;
+
     Variable(std::string name, TypePtr type) : name(std::move(name)), type(type) {}
     virtual ~Variable() = default;
 
@@ -57,8 +60,6 @@ class Variable {
     }
 
    private:
-    std::string name;
-    TypePtr type;
 };
 
 using VarPtr = std::shared_ptr<Variable>;

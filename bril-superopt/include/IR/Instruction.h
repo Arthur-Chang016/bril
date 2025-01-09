@@ -4,6 +4,7 @@
 #include <IR/Type.h>
 
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -127,13 +128,14 @@ class Call : public Instruction {
 
 class Return : public Instruction {
    public:
+    Return(std::optional<std::string> val) : val(val) {}
     Return(std::string val) : val(std::move(val)) {}
     ~Return() = default;
     std::ostream& print(std::ostream& os) const override;
     bool isTerminator() const override { return true; }
 
    private:
-    std::string val;
+    std::optional<std::string> val;
 };
 
 class Print : public Instruction {

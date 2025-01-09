@@ -1,7 +1,12 @@
 #include <IR/Instruction.h>
 
 #include <iostream>
+#include <memory>
 #include <nlohmann/json.hpp>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <vector>
 using json = nlohmann::json;
 
 namespace ir {
@@ -15,7 +20,15 @@ std::ostream& Label::print(std::ostream& os) const {
 }
 
 std::ostream& Constant::print(std::ostream& os) const {
-    return os << *this->dest << " = const " << this->val << ";";
+    if (auto intType = std::dynamic_pointer_cast<IntType>(this->dest->type)) {
+        return os << *this->dest << " = const " << this->val << ";";
+    } else if (auto boolType = std::dynamic_pointer_cast<BoolType>(this->dest->type)) {
+        return os << *this->dest << " = const " << (this->val ? "true" : "false") << ";";
+    } else {
+        std::stringstream ss;
+        ss << *this->dest->type;
+        throw std::runtime_error("Invalid type for constant: " + ss.str());
+    }
 }
 
 std::ostream& BinaryOp::print(std::ostream& os) const {
@@ -78,7 +91,7 @@ std::ostream& Call::print(std::ostream& os) const {
 }
 
 std::ostream& Return::print(std::ostream& os) const {
-    return os << "ret " << this->val << ";";
+    return os << "ret" << (this->val ? " " + this->val.value() : "") << ";";
 }
 
 std::ostream& Print::print(std::ostream& os) const {
@@ -160,20 +173,20 @@ InstPtr ParseInstr(const json& instJson) {
     } else if (BinaryOpType binOp = StrToBinOp(op); binOp != BinaryOpType::BinInvalid) {
         std::string d = instJson["dest"];
         TypePtr type = ParseType(instJson["type"]);
-        std::string lhs = instJson["args"][0], rhs = instJson["args"][1];
+        std::string lhs = instJson.at("args").at(0), rhs = instJson.at("args").at(1);
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
         return std::make_shared<BinaryOp>(binOp, dest, lhs, rhs);
     } else if (UnaryOpType unOp = StrToUnOp(op); unOp != UnaryOpType::UnInvalid) {
         std::string d = instJson["dest"];
         TypePtr type = ParseType(instJson["type"]);
-        std::string src = instJson["args"][0];
+        std::string src = instJson.at("args").at(0);
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
         return std::make_shared<UnaryOp>(unOp, dest, src);
     } else if (op == "jmp") {
         std::string label = instJson["labels"].at(0);
         return std::make_shared<Jump>(std::move(label));
     } else if (op == "br") {
-        std::string cond = instJson["args"].at(0);
+        std::string cond = instJson.at("args").at(0);
         std::string ifTrue = instJson["labels"].at(0), ifFalse = instJson["labels"].at(1);
         return std::make_shared<Branch>(cond, ifTrue, ifFalse);
     } else if (op == "call") {
@@ -181,15 +194,16 @@ InstPtr ParseInstr(const json& instJson) {
         VarPtr dest = std::make_shared<Variable>(instJson["dest"], type);
         std::string func = instJson["funcs"].at(0);
         std::vector<std::string> args;
-        for (const auto& arg : instJson["args"])
+        for (const auto& arg : instJson.at("args"))
             args.push_back(arg);
         return std::make_shared<Call>(dest, func, std::move(args));
     } else if (op == "ret") {
-        std::string ret = instJson["args"].at(0);
+        std::optional<std::string> ret = std::nullopt;
+        if (instJson.contains("args")) ret = instJson.at("args").at(0);
         return std::make_shared<Return>(ret);
     } else if (op == "print") {
         std::vector<std::string> args;
-        for (const auto& arg : instJson["args"]) {
+        for (const auto& arg : instJson.at("args")) {
             args.push_back(arg);
         }
         return std::make_shared<Print>(std::move(args));
@@ -197,31 +211,31 @@ InstPtr ParseInstr(const json& instJson) {
         std::string d = instJson["dest"];
         TypePtr type = ParseType(instJson["type"]);
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
-        std::string src = instJson["args"].at(0);
+        std::string src = instJson.at("args").at(0);
         return std::make_shared<Id>(dest, src);
     } else if (op == "alloc") {
         std::string d = instJson["dest"];
         TypePtr type = ParseType(instJson["type"]);
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
-        std::string src = instJson["args"].at(0);
+        std::string src = instJson.at("args").at(0);
         return std::make_shared<Alloc>(dest, src);
     } else if (op == "free") {
-        std::string src = instJson["args"].at(0);
+        std::string src = instJson.at("args").at(0);
         return std::make_shared<Free>(src);
     } else if (op == "load") {
         std::string d = instJson["dest"];
         TypePtr type = ParseType(instJson["type"]);
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
-        std::string ptr = instJson["args"].at(0);
+        std::string ptr = instJson.at("args").at(0);
         return std::make_shared<Load>(dest, ptr);
     } else if (op == "store") {
-        std::string ptr = instJson["args"].at(0), val = instJson["args"].at(1);
+        std::string ptr = instJson.at("args").at(0), val = instJson.at("args").at(1);
         return std::make_shared<Store>(ptr, val);
     } else if (op == "ptradd") {
         std::string d = instJson["dest"];
         TypePtr type = ParseType(instJson["type"]);
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
-        std::string ptr = instJson["args"].at(0), offset = instJson["args"].at(1);
+        std::string ptr = instJson.at("args").at(0), offset = instJson.at("args").at(1);
         return std::make_shared<PtrAdd>(dest, ptr, offset);
     } else
         throw std::runtime_error("Unknown instruction: " + instJson.dump());
