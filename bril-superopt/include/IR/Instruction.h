@@ -9,18 +9,23 @@
 
 namespace ir {
 
+class Instruction;
+using InstPtr = std::shared_ptr<Instruction>;
+
+std::ostream& operator<<(std::ostream& os, const Instruction& instr);
+
 class Instruction {
    public:
     Instruction() = default;
     virtual ~Instruction() = default;
+    virtual std::ostream& print(std::ostream& os) const = 0;
 };
-
-using InstPtr = std::shared_ptr<Instruction>;
 
 class Label : public Instruction {
    public:
     Label(std::string name) : name(name) {}
     ~Label() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     std::string name;
@@ -30,6 +35,7 @@ class Constant : public Instruction {
    public:
     Constant(VarPtr dest, int64_t val) : dest(dest), val(val) {}
     ~Constant() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     VarPtr dest;
@@ -55,6 +61,7 @@ class BinaryOp : public Instruction {
    public:
     BinaryOp(BinaryOpType op, VarPtr dest, std::string lhs, std::string rhs) : dest(dest), op(op), lhs(lhs), rhs(rhs) {}
     ~BinaryOp() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     VarPtr dest;
@@ -71,6 +78,7 @@ class UnaryOp : public Instruction {
    public:
     UnaryOp(UnaryOpType op, VarPtr dest, std::string src) : dest(dest), op(op), src(src) {}
     ~UnaryOp() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     VarPtr dest;
@@ -82,6 +90,7 @@ class Jump : public Instruction {
    public:
     Jump(std::string target) : target(target) {}
     ~Jump() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     std::string target;
@@ -91,6 +100,7 @@ class Branch : public Instruction {
    public:
     Branch(std::string cond, std::string ifTrue, std::string ifFalse) : cond(cond), ifTrue(ifTrue), ifFalse(ifFalse) {}
     ~Branch() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     std::string cond, ifTrue, ifFalse;
@@ -100,6 +110,7 @@ class Call : public Instruction {
    public:
     Call(VarPtr dest, std::string func, std::vector<std::string> args) : dest(dest), func(std::move(func)), args(std::move(args)) {}
     ~Call() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     VarPtr dest;  // might be nullptr
@@ -111,6 +122,7 @@ class Return : public Instruction {
    public:
     Return(std::string val) : val(std::move(val)) {}
     ~Return() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     std::string val;
@@ -120,6 +132,7 @@ class Print : public Instruction {
    public:
     Print(std::vector<std::string> args) : args(std::move(args)) {}
     ~Print() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     std::vector<std::string> args;
@@ -129,6 +142,7 @@ class Id : public Instruction {
    public:
     Id(VarPtr dest, std::string src) : dest(dest), src(src) {}
     ~Id() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     VarPtr dest;
@@ -139,6 +153,7 @@ class Alloc : public Instruction {
    public:
     Alloc(VarPtr dest, std::string size) : dest(dest), size(size) {}
     ~Alloc() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     VarPtr dest;
@@ -149,6 +164,7 @@ class Free : public Instruction {
    public:
     Free(std::string site) : site(site) {}
     ~Free() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     std::string site;
@@ -158,6 +174,7 @@ class Load : public Instruction {
    public:
     Load(VarPtr dest, std::string ptr) : dest(dest), ptr(ptr) {}
     ~Load() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     VarPtr dest;
@@ -168,6 +185,7 @@ class Store : public Instruction {
    public:
     Store(std::string ptr, std::string val) : ptr(ptr), val(val) {}
     ~Store() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     std::string ptr, val;
@@ -177,6 +195,7 @@ class PtrAdd : public Instruction {
    public:
     PtrAdd(VarPtr dest, std::string ptr, std::string offset) : dest(dest), ptr(ptr), offset(offset) {}
     ~PtrAdd() = default;
+    std::ostream& print(std::ostream& os) const override;
 
    private:
     VarPtr dest;

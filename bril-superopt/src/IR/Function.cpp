@@ -167,7 +167,14 @@ Function::Function(const json& funcJson) {
         instrs.push_back(ParseInstr(instr));
     }
 
-    std::cout << "instrs size: " << instrs.size() << std::endl;
+    for (auto instr : instrs) {
+        if (auto label = std::dynamic_pointer_cast<Label>(instr)) {
+            // std::cout << "label: " << label->name << std::endl;
+        } else {
+            std::cout << "  ";
+        }
+        std::cout << *instr << std::endl;
+    }
 
     // construct basic blocks
     BBPtr currentBlock = std::make_shared<BasicBlock>(std::move(instrs));
