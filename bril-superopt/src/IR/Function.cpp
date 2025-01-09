@@ -7,6 +7,9 @@
 using json = nlohmann::json;
 #include <iostream>
 #include <memory>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
 
 namespace ir {
 
@@ -166,25 +169,55 @@ Function::Function(const json& funcJson) {
     for (const auto& instr : funcJson["instrs"]) {
         instrs.push_back(ParseInstr(instr));
     }
-
-    for (auto instr : instrs) {
-        if (auto label = std::dynamic_pointer_cast<Label>(instr)) {
-            // std::cout << "label: " << label->name << std::endl;
-        } else {
-            std::cout << "  ";
+    // find all used labels
+    std::unordered_set<std::string> usedLabels;
+    for (const auto& instr : instrs) {
+        if (auto branch = std::dynamic_pointer_cast<Branch>(instr)) {
+            usedLabels.insert(branch->ifTrue);
+            usedLabels.insert(branch->ifFalse);
+        } else if (auto jump = std::dynamic_pointer_cast<Jump>(instr)) {
+            usedLabels.insert(jump->target);
         }
-        std::cout << *instr << std::endl;
     }
 
     // construct basic blocks
-    BBPtr currentBlock = std::make_shared<BasicBlock>(std::move(instrs));
-    // for (const auto& instr : instrs) {
-    //     currentBlock->addInstruction(instr);
-    //     if (instr->isTerminator()) {
-    //         basicBlocks.push_back(currentBlock);
-    //         currentBlock = std::make_shared<BasicBlock>();
-    //     }
-    // }
+    std::unordered_map<std::string, BBWPtr> label2bb;
+    BBPtr curBlock = std::make_shared<BasicBlock>();
+    for (const auto& instr : instrs) {
+        auto label = std::dynamic_pointer_cast<Label>(instr);
+        if (label && usedLabels.contains(label->name)) {
+            if (!curBlock->instrs.empty()) {  // create a new block if it starts with a used label
+                this->basicBlocks.push_back(curBlock);
+                curBlock = std::make_shared<BasicBlock>();
+            }
+        }
+        if (label && curBlock->instrs.empty())  // tag the block with the label
+            label2bb[label->name] = curBlock;
+        curBlock->instrs.push_back(instr);
+
+        if (instr->isTerminator()) {  // create a new block if it ends with a terminator
+            this->basicBlocks.push_back(curBlock);
+            curBlock = std::make_shared<BasicBlock>();
+        }
+    }
+    if (!curBlock->instrs.empty()) this->basicBlocks.push_back(curBlock);
+    // connect branch and jump instructions to their corresponding basic blocks
+    for (auto bb : this->basicBlocks) {
+        assert(!bb->instrs.empty() && "Basic block is empty");
+        if (auto branch = std::dynamic_pointer_cast<Branch>(bb->instrs.back())) {
+            bb->taken = label2bb[branch->ifTrue];
+            bb->notTaken = label2bb[branch->ifFalse];
+        } else if (auto jump = std::dynamic_pointer_cast<Jump>(bb->instrs.back())) {
+            bb->taken = label2bb[jump->target];
+        }
+    }
+    // connect fall-through basic blocks
+    for (size_t i = 0; i < this->basicBlocks.size() - 1; i++) {
+        auto cur = this->basicBlocks[i], next = this->basicBlocks[i + 1];
+        if (cur->instrs.back()->isTerminator() == false) {
+            cur->notTaken = next;
+        }
+    }
 }
 
 std::ostream& operator<<(std::ostream& os, const Function& func) {
@@ -200,15 +233,11 @@ std::ostream& operator<<(std::ostream& os, const Function& func) {
     }
     if (func.retType)
         os << ": " << *func.retType;
-
-    // TODO
     // print basic blocks
     os << " {\n";
-    // for (const auto& bb : func.BBs) {
-    //     os << "  ";
-    //     bb->print(os);
-    //     os << "\n";
-    // }
+    for (const auto& bb : func.basicBlocks) {
+        os << *bb;
+    }
     os << "}\n";
     return os;
 }

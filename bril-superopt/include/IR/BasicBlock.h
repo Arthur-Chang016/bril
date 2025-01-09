@@ -10,16 +10,21 @@ namespace ir {
 
 class BasicBlock;
 using BBPtr = std::shared_ptr<BasicBlock>;
-using BBEdge = std::weak_ptr<BasicBlock>;
+using BBWPtr = std::weak_ptr<BasicBlock>;
 
 class BasicBlock {
    public:
-    BasicBlock(std::vector<InstPtr> &&instrs);
+    // jmp: taken; fall-through: notTaken
+    BBWPtr taken, notTaken;
+    std::vector<InstPtr> instrs;
+
+    BasicBlock() = default;
+    BasicBlock(std::vector<InstPtr>&& instrs);
     ~BasicBlock() = default;
 
+    friend std::ostream& operator<<(std::ostream& os, const BasicBlock& bb);
+
    private:
-    std::vector<InstPtr> instrs;
-    BBEdge taken, notTaken;
 };
 
 }  // namespace ir

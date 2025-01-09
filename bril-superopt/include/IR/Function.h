@@ -22,7 +22,7 @@ class Function {
    private:
     std::string name;
     std::vector<VarPtr> args;
-    std::vector<BBPtr> BBs;
+    std::vector<BBPtr> basicBlocks;
     TypePtr retType = nullptr;
 };
 

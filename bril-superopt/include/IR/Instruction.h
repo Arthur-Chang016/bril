@@ -19,16 +19,18 @@ class Instruction {
     Instruction() = default;
     virtual ~Instruction() = default;
     virtual std::ostream& print(std::ostream& os) const = 0;
+    virtual bool isTerminator() const { return false; }
 };
 
 class Label : public Instruction {
    public:
+    std::string name;
+
     Label(std::string name) : name(name) {}
     ~Label() = default;
     std::ostream& print(std::ostream& os) const override;
 
    private:
-    std::string name;
 };
 
 class Constant : public Instruction {
@@ -88,22 +90,27 @@ class UnaryOp : public Instruction {
 
 class Jump : public Instruction {
    public:
+    std::string target;
+
     Jump(std::string target) : target(target) {}
     ~Jump() = default;
     std::ostream& print(std::ostream& os) const override;
+    bool isTerminator() const override { return true; }
 
    private:
-    std::string target;
 };
 
 class Branch : public Instruction {
    public:
+    std::string cond;
+    std::string ifTrue, ifFalse;
+
     Branch(std::string cond, std::string ifTrue, std::string ifFalse) : cond(cond), ifTrue(ifTrue), ifFalse(ifFalse) {}
     ~Branch() = default;
     std::ostream& print(std::ostream& os) const override;
+    bool isTerminator() const override { return true; }
 
    private:
-    std::string cond, ifTrue, ifFalse;
 };
 
 class Call : public Instruction {
@@ -123,6 +130,7 @@ class Return : public Instruction {
     Return(std::string val) : val(std::move(val)) {}
     ~Return() = default;
     std::ostream& print(std::ostream& os) const override;
+    bool isTerminator() const override { return true; }
 
    private:
     std::string val;

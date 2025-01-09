@@ -4,6 +4,9 @@
 
 int main() {
     auto program = ir::parse(std::cin);
-    std::cout << "Hello, World!" << std::endl;
+
+    std::cout << *program << std::endl;
+
+    // std::cout << "Hello, World!" << std::endl;
     return 0;
 }
