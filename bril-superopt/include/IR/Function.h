@@ -3,6 +3,7 @@
 
 #include <IR/BasicBlock.h>
 #include <IR/Instruction.h>
+#include <IR/Type.h>
 
 #include <memory>
 #include <nlohmann/json_fwd.hpp>

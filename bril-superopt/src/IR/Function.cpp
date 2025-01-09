@@ -1,6 +1,7 @@
 #include <IR/BasicBlock.h>
 #include <IR/Function.h>
 #include <IR/Instruction.h>
+#include <IR/Type.h>
 
 #include <nlohmann/json.hpp>
 using json = nlohmann::json;
