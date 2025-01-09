@@ -2,10 +2,11 @@
 #define IR_TYPE_H
 
 #include <memory>
+#include <nlohmann/json_fwd.hpp>
 #include <ostream>
+using json = nlohmann::json;
 
 namespace ir {
-
 class Type;
 using TypePtr = std::shared_ptr<Type>;
 
@@ -61,6 +62,8 @@ class Variable {
 };
 
 using VarPtr = std::shared_ptr<Variable>;
+
+TypePtr ParseType(const json& typeJson);
 
 }  // namespace ir
 

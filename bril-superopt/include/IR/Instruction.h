@@ -210,6 +210,12 @@ class PtrAdd : public Instruction {
     std::string ptr, offset;
 };
 
+BinaryOpType StrToBinOp(const std::string& op);
+
+UnaryOpType StrToUnOp(const std::string& op);
+
+InstPtr ParseInstr(const json& instJson);
+
 }  // namespace ir
 
 #endif  // IR_INSTRUCTION_H

@@ -18,6 +18,7 @@ class Function {
     Function(const json& funcJson);
     ~Function() = default;
     friend std::ostream& operator<<(std::ostream& os, const Function& func);
+    void ConstructCFG(std::vector<InstPtr>& instrs);
 
    private:
     std::string name;
