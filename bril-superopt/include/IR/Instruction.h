@@ -28,7 +28,7 @@ class Label : public Instruction {
 
 class Constant : public Instruction {
    public:
-    Constant(int64_t val) : val(val) {}
+    Constant(VarPtr dest, int64_t val) : dest(dest), val(val) {}
     ~Constant() = default;
 
    private:
@@ -48,6 +48,7 @@ enum BinaryOpType {
     Gt,
     Le,
     Ge,
+    BinInvalid,
 };
 
 class BinaryOp : public Instruction {
@@ -63,6 +64,7 @@ class BinaryOp : public Instruction {
 
 enum UnaryOpType {
     Not,
+    UnInvalid
 };
 
 class UnaryOp : public Instruction {
@@ -121,6 +123,16 @@ class Print : public Instruction {
 
    private:
     std::vector<std::string> args;
+};
+
+class Id : public Instruction {
+   public:
+    Id(VarPtr dest, std::string src) : dest(dest), src(src) {}
+    ~Id() = default;
+
+   private:
+    VarPtr dest;
+    std::string src;
 };
 
 }  // namespace ir
