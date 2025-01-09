@@ -61,26 +61,8 @@ UnaryOpType StrToUnOp(const std::string& op) {
         return UnaryOpType::UnInvalid;
 }
 
-// Parsing instruction: {"dest":"inc","op":"const","type":"int","value":1}
-// Parsing instruction: {"dest":"v","op":"const","type":"int","value":1000}
-// Parsing instruction: {"dest":"max","op":"const","type":"int","value":1000000}
-// Parsing instruction: {"dest":"count","op":"const","type":"int","value":0}
-// Parsing instruction: {"args":["v"],"dest":"pi","op":"alloc","type":{"ptr":"int"}}
-// Parsing instruction: {"args":["v"],"dest":"pp","op":"alloc","type":{"ptr":{"ptr":"int"}}}
-// Parsing instruction: {"label":"lbl"}
-// Parsing instruction: {"args":["count","inc"],"dest":"count","op":"add","type":"int"}
-// Parsing instruction: {"args":["pp","pi"],"op":"store"}
-// Parsing instruction: {"args":["pp"],"dest":"pi","op":"load","type":{"ptr":"int"}}
-// Parsing instruction: {"args":["count","max"],"dest":"loop","op":"ge","type":"bool"}
-// Parsing instruction: {"args":["loop"],"labels":["end","lbl"],"op":"br"}
-// Parsing instruction: {"label":"end"}
-// Parsing instruction: {"args":["pi"],"op":"free"}
-// Parsing instruction: {"args":["pp"],"op":"free"}
-// Parsing instruction: {"args":["count"],"op":"print"}
-// Parsing instruction: {"args":["n_1","queens","icount","site"],"dest":"icount","funcs":["queen"],"op":"call","type":"int"}
-// Parsing instruction: {"args":["one"],"dest":"ite","op":"id","type":"int"}
 InstPtr ParseInstr(const json& instJson) {
-    std::cout << "Parsing instruction: " << instJson << std::endl;
+    // std::cout << "Parsing instruction: " << instJson << std::endl;
     if (instJson.contains("label")) {
         std::string label = instJson["label"];
         return std::make_shared<Label>(std::move(label));
@@ -134,6 +116,30 @@ InstPtr ParseInstr(const json& instJson) {
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
         std::string src = instJson["args"].at(0);
         return std::make_shared<Id>(dest, src);
+    } else if (op == "alloc") {
+        std::string d = instJson["dest"];
+        TypePtr type = ParseType(instJson["type"]);
+        VarPtr dest = std::make_shared<Variable>(std::move(d), type);
+        std::string src = instJson["args"].at(0);
+        return std::make_shared<Alloc>(dest, src);
+    } else if (op == "free") {
+        std::string src = instJson["args"].at(0);
+        return std::make_shared<Free>(src);
+    } else if (op == "load") {
+        std::string d = instJson["dest"];
+        TypePtr type = ParseType(instJson["type"]);
+        VarPtr dest = std::make_shared<Variable>(std::move(d), type);
+        std::string ptr = instJson["args"].at(0);
+        return std::make_shared<Load>(dest, ptr);
+    } else if (op == "store") {
+        std::string ptr = instJson["args"].at(0), val = instJson["args"].at(1);
+        return std::make_shared<Store>(ptr, val);
+    } else if (op == "ptradd") {
+        std::string d = instJson["dest"];
+        TypePtr type = ParseType(instJson["type"]);
+        VarPtr dest = std::make_shared<Variable>(std::move(d), type);
+        std::string ptr = instJson["args"].at(0), offset = instJson["args"].at(1);
+        return std::make_shared<PtrAdd>(dest, ptr, offset);
     } else
         throw std::runtime_error("Unknown instruction: " + instJson.dump());
 }

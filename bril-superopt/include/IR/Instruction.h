@@ -135,6 +135,54 @@ class Id : public Instruction {
     std::string src;
 };
 
+class Alloc : public Instruction {
+   public:
+    Alloc(VarPtr dest, std::string size) : dest(dest), size(size) {}
+    ~Alloc() = default;
+
+   private:
+    VarPtr dest;
+    std::string size;
+};
+
+class Free : public Instruction {
+   public:
+    Free(std::string site) : site(site) {}
+    ~Free() = default;
+
+   private:
+    std::string site;
+};
+
+class Load : public Instruction {
+   public:
+    Load(VarPtr dest, std::string ptr) : dest(dest), ptr(ptr) {}
+    ~Load() = default;
+
+   private:
+    VarPtr dest;
+    std::string ptr;
+};
+
+class Store : public Instruction {
+   public:
+    Store(std::string ptr, std::string val) : ptr(ptr), val(val) {}
+    ~Store() = default;
+
+   private:
+    std::string ptr, val;
+};
+
+class PtrAdd : public Instruction {
+   public:
+    PtrAdd(VarPtr dest, std::string ptr, std::string offset) : dest(dest), ptr(ptr), offset(offset) {}
+    ~PtrAdd() = default;
+
+   private:
+    VarPtr dest;
+    std::string ptr, offset;
+};
+
 }  // namespace ir
 
 #endif  // IR_INSTRUCTION_H
