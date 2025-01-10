@@ -16,28 +16,25 @@ endif()
 
 set(CMAKE_CXX_FLAGS_DEBUG "-fsanitize=address,undefined -fno-omit-frame-pointer")
 
-# Add an executable
-# The list of source files can be expanded as your project grows
-file(GLOB_RECURSE SRC_FILES "${PROJECT_SOURCE_DIR}/src/*.cpp")
-add_executable(${PROJECT_NAME} ${SRC_FILES})
+file(GLOB_RECURSE SRC_FILES "${PROJECT_SOURCE_DIR}/src/IR/*.cpp")
 
-# Add include directories for headers
-target_include_directories(${PROJECT_NAME}
-    PRIVATE
-        ${PROJECT_SOURCE_DIR}/include
-)
-
+# Fetch the nlohmann/json library
 include(FetchContent)
-
 FetchContent_Declare(json URL 
     https://github.com/nlohmann/json/releases/download/v3.11.3/json.tar.xz
         DOWNLOAD_EXTRACT_TIMESTAMP true)
 FetchContent_MakeAvailable(json)
 
-target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
+# Add an executable for json2bril
+add_executable(json2bril ${SRC_FILES} "${PROJECT_SOURCE_DIR}/src/json2bril.cpp")
+target_include_directories(json2bril PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(json2bril PRIVATE nlohmann_json::nlohmann_json)
 
-# Optionally, you can link libraries if needed
-# target_link_libraries(${PROJECT_NAME} PRIVATE some_library)
+# Add an executable for brili
+add_executable(brili ${SRC_FILES} "${PROJECT_SOURCE_DIR}/src/brili.cpp")
+target_include_directories(brili PRIVATE ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(brili PRIVATE nlohmann_json::nlohmann_json)
+
 
 # (Optional) Installation instructions, if you plan to install your project
 # install(TARGETS ${PROJECT_NAME} DESTINATION bin)
