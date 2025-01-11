@@ -114,16 +114,15 @@ std::ostream& operator<<(std::ostream& os, const Function& func) {
 }
 
 std::optional<int64_t> Function::execute(varContext& vars, HeapManager& heap) {
-    // TODO
-    // BBPtr curBB = this->entryBB;
-    // while (curBB) {
-    //     auto nextBB = curBB->execute(vars);
-    // }
-
-    // for (const auto& bb : basicBlocks) {
-    //     for (const auto& instr : bb->instrs) {
-    //         instr->execute(vars);
-    //     }
+    BBPtr curBB = this->entryBB;
+    std::optional<int64_t> retVal;
+    do {
+        ctrlStatus nextStatus = curBB->execute(vars, heap);
+        bool isRet = nextStatus.retValid();
+        if (isRet) retVal = nextStatus.getRet();
+        curBB = isRet ? nullptr : (nextStatus.getTaken() ? curBB->taken.lock() : curBB->notTaken.lock());
+    } while (curBB);
+    return retVal;
 }
 
 }  // namespace ir
