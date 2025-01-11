@@ -6,6 +6,7 @@
 #include <nlohmann/json_fwd.hpp>
 #include <ostream>
 #include <string>
+#include <unordered_map>
 using json = nlohmann::json;
 
 namespace ir {
@@ -67,6 +68,8 @@ class RuntimeVal {
         }
     }
 };
+
+using varContext = std::unordered_map<std::string, RuntimeVal>;
 
 using IntTypePtr = std::shared_ptr<IntType>;
 using BoolTypePtr = std::shared_ptr<BoolType>;

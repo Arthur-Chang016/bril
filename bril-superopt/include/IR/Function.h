@@ -2,6 +2,7 @@
 #define IR_FUNCTION_H
 
 #include <IR/BasicBlock.h>
+#include <IR/Heap.h>
 #include <IR/Instruction.h>
 #include <IR/Type.h>
 
@@ -20,7 +21,7 @@ class Function {
     ~Function() = default;
     friend std::ostream& operator<<(std::ostream& os, const Function& func);
     void ConstructCFG(std::vector<InstPtr>& instrs);
-    std::optional<int64_t> execute(std::unordered_map<std::string, RuntimeVal>& vars);
+    std::optional<int64_t> execute(varContext& vars, HeapManager& heap);
 
    private:
     std::string name;

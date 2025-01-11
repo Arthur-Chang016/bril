@@ -1,4 +1,5 @@
 #include <IR/Function.h>
+#include <IR/Heap.h>
 #include <IR/Program.h>
 #include <IR/Type.h>
 
@@ -24,9 +25,9 @@ std::ostream& operator<<(std::ostream& os, const Program& prog) {
     return os;
 }
 
-void Program::execute(std::unordered_map<std::string, RuntimeVal>& vars) {
+void Program::execute(varContext& vars, HeapManager& heap) {
     for (const auto& func : functions)
-        func->execute(vars);
+        func->execute(vars, heap);
 }
 
 }  // namespace ir

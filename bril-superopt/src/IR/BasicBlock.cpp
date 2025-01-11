@@ -1,4 +1,5 @@
 #include <IR/BasicBlock.h>
+#include <IR/Heap.h>
 #include <IR/Instruction.h>
 #include <IR/Type.h>
 
@@ -19,10 +20,10 @@ std::ostream &operator<<(std::ostream &os, const BasicBlock &bb) {
     return os;
 }
 
-ctrlStatus BasicBlock::execute(std::unordered_map<std::string, RuntimeVal> &vars) {
+ctrlStatus BasicBlock::execute(varContext &vars, HeapManager &heap) {
     ctrlStatus status = false;  // default fall-through for empty BB
     for (const auto &instr : instrs) {
-        status = instr->execute(vars);
+        status = instr->execute(vars, heap);
         if (instr->isTerminator())
             break;
     }

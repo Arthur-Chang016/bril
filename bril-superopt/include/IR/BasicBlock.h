@@ -1,6 +1,7 @@
 #ifndef IR_BASICBLOCK_H
 #define IR_BASICBLOCK_H
 
+#include <IR/Heap.h>
 #include <IR/Instruction.h>
 #include <IR/Type.h>
 
@@ -24,7 +25,7 @@ class BasicBlock {
     BasicBlock(std::vector<InstPtr>&& instrs);
     ~BasicBlock() = default;
     friend std::ostream& operator<<(std::ostream& os, const BasicBlock& bb);
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars);
+    ctrlStatus execute(varContext& vars, HeapManager& heap);
 
    private:
 };

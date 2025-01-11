@@ -2,6 +2,7 @@
 #define IR_INSTRUCTION_H
 
 #include <IR/Type.h>
+#include <IR/Heap.h>
 
 #include <iostream>
 #include <memory>
@@ -36,6 +37,8 @@ class ctrlStatus {
         return std::get<bool>(status);
     }
 
+    ctrlStatus(const ctrlStatus& other) = default;
+
     ctrlStatus& operator=(const ctrlStatus& other) {
         status = other.status;
         return *this;
@@ -53,7 +56,7 @@ class Instruction {
     virtual bool isTerminator() const { return false; }
 
     // return int64_t only when it's 'ret'
-    virtual ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) {
+    virtual ctrlStatus execute(varContext& vars, HeapManager& heap) {
         return false;  // default fall-through
     }
 };
@@ -75,7 +78,7 @@ class Constant : public Instruction {
     ~Constant() = default;
     std::ostream& print(std::ostream& os) const override;
 
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         vars[dest->name] = RuntimeVal(dest->type, val);
         return false;
     }
@@ -106,7 +109,7 @@ class BinaryOp : public Instruction {
     ~BinaryOp() = default;
     std::ostream& print(std::ostream& os) const override;
 
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         int64_t lhsVal = vars[lhs].value;
         int64_t rhsVal = vars[rhs].value;
         int64_t result;
@@ -168,7 +171,7 @@ class UnaryOp : public Instruction {
     ~UnaryOp() = default;
     std::ostream& print(std::ostream& os) const override;
 
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         int64_t srcVal = vars[src].value;
         int64_t result;
         switch (op) {
@@ -196,7 +199,7 @@ class Jump : public Instruction {
     ~Jump() = default;
     std::ostream& print(std::ostream& os) const override;
     bool isTerminator() const override { return true; }
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override { return true; }
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override { return true; }
 
    private:
 };
@@ -210,7 +213,7 @@ class Branch : public Instruction {
     ~Branch() = default;
     std::ostream& print(std::ostream& os) const override;
     bool isTerminator() const override { return true; }
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         return bool(vars[cond].value != 0);
     }
 
@@ -223,7 +226,7 @@ class Call : public Instruction {
     ~Call() = default;
     std::ostream& print(std::ostream& os) const override;
 
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         // std::unordered_map<std::string, int64_t> newVars;
 
         // TODO implement
@@ -243,7 +246,7 @@ class Return : public Instruction {
     ~Return() = default;
     std::ostream& print(std::ostream& os) const override;
     bool isTerminator() const override { return true; }
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         if (val)
             return vars[*val].value;
         else
@@ -260,7 +263,7 @@ class Print : public Instruction {
     ~Print() = default;
     std::ostream& print(std::ostream& os) const override;
 
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         for (const auto& arg : args)
             std::cout << vars[arg].toString() << ' ';
         std::cout << std::endl;
@@ -277,7 +280,7 @@ class Id : public Instruction {
     ~Id() = default;
     std::ostream& print(std::ostream& os) const override;
 
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         vars[dest->name] = RuntimeVal(dest->type, vars[src].value);
         return false;
     }
@@ -293,7 +296,7 @@ class Alloc : public Instruction {
     ~Alloc() = default;
     std::ostream& print(std::ostream& os) const override;
 
-    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         int64_t runtimeSize = vars[size].value;
         // TODO add heap mem management
 

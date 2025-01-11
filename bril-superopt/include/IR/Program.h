@@ -2,6 +2,7 @@
 #define IR_PROGRAM_H
 
 #include <IR/Function.h>
+#include <IR/Heap.h>
 #include <IR/Type.h>
 
 #include <memory>
@@ -18,7 +19,7 @@ class Program {
     Program(const json& progJson);
     ~Program() = default;
     friend std::ostream& operator<<(std::ostream& os, const Program& prog);
-    void execute(std::unordered_map<std::string, RuntimeVal>& vars);
+    void execute(varContext& vars, HeapManager& heap);
 
    private:
     std::vector<FunctionPtr> functions;

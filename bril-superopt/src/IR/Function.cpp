@@ -1,6 +1,8 @@
 #include <IR/BasicBlock.h>
 #include <IR/Function.h>
+#include <IR/Heap.h>
 #include <IR/Instruction.h>
+#include <IR/Parser.h>
 #include <IR/Type.h>
 
 #include <nlohmann/json.hpp>
@@ -111,7 +113,7 @@ std::ostream& operator<<(std::ostream& os, const Function& func) {
     return os;
 }
 
-std::optional<int64_t> Function::execute(std::unordered_map<std::string, RuntimeVal>& vars) {
+std::optional<int64_t> Function::execute(varContext& vars, HeapManager& heap) {
     // TODO
     // BBPtr curBB = this->entryBB;
     // while (curBB) {
