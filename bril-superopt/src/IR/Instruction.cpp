@@ -1,3 +1,4 @@
+#include <IR/Function.h>
 #include <IR/Instruction.h>
 
 #include <iostream>
@@ -85,9 +86,21 @@ std::ostream& Branch::print(std::ostream& os) const {
 
 std::ostream& Call::print(std::ostream& os) const {
     if (this->dest) os << *this->dest << " = ";
-    os << "call @" << this->func;
+    os << "call @" << this->funcName;
     for (const auto& arg : this->args) os << " " << arg;
     return os << ";";
+}
+
+ctrlStatus Call::execute(varContext& vars, HeapManager& heap) {
+    varContext newVars;
+    auto func = this->func.lock();
+    // construct newVars for args
+    for (size_t i = 0; i < args.size(); ++i) {
+        newVars[func->args[i]->name] = vars[this->args[i]];
+    }
+    std::optional<int64_t> ret = func->execute(newVars, heap);
+    if (ret) vars[dest->name] = RuntimeVal(dest->type, *ret);
+    return false;
 }
 
 std::ostream& Return::print(std::ostream& os) const {

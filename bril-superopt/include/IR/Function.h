@@ -17,6 +17,10 @@ namespace ir {
 
 class Function {
    public:
+    std::string name;
+    std::vector<VarPtr> args;
+    std::vector<BBPtr> basicBlocks;
+
     Function(const json& funcJson);
     ~Function() = default;
     friend std::ostream& operator<<(std::ostream& os, const Function& func);
@@ -24,14 +28,12 @@ class Function {
     std::optional<int64_t> execute(varContext& vars, HeapManager& heap);
 
    private:
-    std::string name;
-    std::vector<VarPtr> args;
     BBPtr entryBB = nullptr;
-    std::vector<BBPtr> basicBlocks;
     TypePtr retType = nullptr;
 };
 
-using FunctionPtr = std::shared_ptr<Function>;
+using FuncPtr = std::shared_ptr<Function>;
+using FuncWPtr = std::weak_ptr<Function>;
 
 }  // namespace ir
 

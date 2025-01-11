@@ -1,8 +1,8 @@
 #ifndef IR_INSTRUCTION_H
 #define IR_INSTRUCTION_H
 
-#include <IR/Type.h>
 #include <IR/Heap.h>
+#include <IR/Type.h>
 
 #include <iostream>
 #include <memory>
@@ -220,22 +220,22 @@ class Branch : public Instruction {
    private:
 };
 
+// forward declaration to avoid circular dependency
+class Function;
+using FuncWPtr = std::weak_ptr<Function>;
+
 class Call : public Instruction {
    public:
-    Call(VarPtr dest, std::string func, std::vector<std::string> args) : dest(dest), func(std::move(func)), args(std::move(args)) {}
+    std::string funcName;
+    FuncWPtr func;
+
+    Call(VarPtr dest, std::string funcName, std::vector<std::string> args) : dest(dest), funcName(std::move(funcName)), args(std::move(args)) {}
     ~Call() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
-        // std::unordered_map<std::string, int64_t> newVars;
-
-        // TODO implement
-        return false;
-    }
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override;
 
    private:
-    VarPtr dest;       // might be nullptr
-    std::string func;  // TODO change to FunctionWPtr
+    VarPtr dest;  // might be nullptr
     std::vector<std::string> args;
 };
 

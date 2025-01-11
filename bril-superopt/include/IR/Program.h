@@ -18,11 +18,12 @@ class Program {
    public:
     Program(const json& progJson);
     ~Program() = default;
+    void ConstructCallLink(const std::unordered_map<std::string, FuncWPtr>& name2func);
     friend std::ostream& operator<<(std::ostream& os, const Program& prog);
     void execute(varContext& vars, HeapManager& heap);
 
    private:
-    std::vector<FunctionPtr> functions;
+    std::vector<FuncPtr> functions;
 };
 
 using ProgramPtr = std::shared_ptr<Program>;
