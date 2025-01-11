@@ -298,9 +298,8 @@ class Alloc : public Instruction {
 
     ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         int64_t runtimeSize = vars[size].value;
-        // TODO add heap mem management
-
-        // vars[dest->name] = std::stoll(sizeInt);
+        int64_t* ptr = heap.allocate(runtimeSize);
+        vars[dest->name] = RuntimeVal(dest->type, reinterpret_cast<int64_t>(ptr));
         return false;
     }
 
@@ -315,6 +314,12 @@ class Free : public Instruction {
     ~Free() = default;
     std::ostream& print(std::ostream& os) const override;
 
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
+        int64_t* ptr = reinterpret_cast<int64_t*>(vars[site].value);
+        heap.deallocate(ptr);
+        return false;
+    }
+
    private:
     std::string site;
 };
@@ -324,6 +329,14 @@ class Load : public Instruction {
     Load(VarPtr dest, std::string ptr) : dest(dest), ptr(ptr) {}
     ~Load() = default;
     std::ostream& print(std::ostream& os) const override;
+
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
+        int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
+        if (heap.boundCheck(addr) == false)
+            throw std::runtime_error(std::format("Uninitialized heap location and/or illegal offset : 0x{:x}", reinterpret_cast<uintptr_t>(addr)));
+        vars[dest->name] = RuntimeVal(dest->type, *addr);
+        return false;
+    }
 
    private:
     VarPtr dest;

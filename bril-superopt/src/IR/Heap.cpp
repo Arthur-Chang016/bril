@@ -1,5 +1,6 @@
 #include <IR/Heap.h>
 
+#include <format>
 #include <stdexcept>
 
 namespace ir {
@@ -15,10 +16,11 @@ void HeapManager::deallocate(int64_t *ptr) {
         delete[] ptr;
         heap.erase(f);
     } else {
-        throw std::runtime_error("Pointer not found in heap");
+        throw std::runtime_error("Base addr not found in heap: " + std::format("0x{:x}", reinterpret_cast<uintptr_t>(ptr)));
     }
 }
 
+// true only if valid
 bool HeapManager::boundCheck(int64_t *ptr) {
     auto greater = heap.upper_bound(ptr);
     if (greater == heap.begin()) return false;
