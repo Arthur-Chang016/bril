@@ -62,6 +62,7 @@ void Function::ConstructCFG(std::vector<InstPtr>& instrs) {
             cur->notTaken = next;
         }
     }
+    if (!this->basicBlocks.empty()) this->entryBB = this->basicBlocks.front();
 }
 
 Function::Function(const json& funcJson) {
@@ -77,7 +78,7 @@ Function::Function(const json& funcJson) {
             this->args.push_back(std::make_shared<Variable>(std::move(name), type));
         }
     }
-    if (funcJson.contains("type")) {
+    if (funcJson.contains("type") && funcJson["type"] != "void") {
         this->retType = ParseType(funcJson["type"]);
     }
     // parse instructions
@@ -108,6 +109,19 @@ std::ostream& operator<<(std::ostream& os, const Function& func) {
     }
     os << "}\n";
     return os;
+}
+
+std::optional<int64_t> Function::execute(std::unordered_map<std::string, RuntimeVal>& vars) {
+    // TODO
+    // BBPtr curBB = this->entryBB;
+    // while (curBB) {
+    //     auto nextBB = curBB->execute(vars);
+    // }
+
+    // for (const auto& bb : basicBlocks) {
+    //     for (const auto& instr : bb->instrs) {
+    //         instr->execute(vars);
+    //     }
 }
 
 }  // namespace ir

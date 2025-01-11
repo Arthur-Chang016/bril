@@ -1,5 +1,6 @@
 #include <IR/Function.h>
 #include <IR/Program.h>
+#include <IR/Type.h>
 
 #include <cassert>
 #include <iostream>
@@ -21,6 +22,11 @@ std::ostream& operator<<(std::ostream& os, const Program& prog) {
     for (const auto& func : prog.functions)
         os << *func << std::endl;
     return os;
+}
+
+void Program::execute(std::unordered_map<std::string, RuntimeVal>& vars) {
+    for (const auto& func : functions)
+        func->execute(vars);
 }
 
 }  // namespace ir

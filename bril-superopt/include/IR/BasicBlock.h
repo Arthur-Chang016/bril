@@ -2,8 +2,10 @@
 #define IR_BASICBLOCK_H
 
 #include <IR/Instruction.h>
+#include <IR/Type.h>
 
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace ir {
@@ -21,8 +23,8 @@ class BasicBlock {
     BasicBlock() = default;
     BasicBlock(std::vector<InstPtr>&& instrs);
     ~BasicBlock() = default;
-
     friend std::ostream& operator<<(std::ostream& os, const BasicBlock& bb);
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars);
 
    private:
 };

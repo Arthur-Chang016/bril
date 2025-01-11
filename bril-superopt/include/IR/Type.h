@@ -1,9 +1,11 @@
 #ifndef IR_TYPE_H
 #define IR_TYPE_H
 
+#include <format>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <ostream>
+#include <string>
 using json = nlohmann::json;
 
 namespace ir {
@@ -41,6 +43,29 @@ class PointerType : public Type {
 
    private:
     TypePtr pointee;
+};
+
+// with type and value
+class RuntimeVal {
+   public:
+    TypePtr type;
+    int64_t value;
+
+    RuntimeVal() = default;
+    RuntimeVal(TypePtr type, int64_t value) : type(std::move(type)), value(value) {}
+    ~RuntimeVal() = default;
+
+    std::string toString() const {
+        if (auto intType = std::dynamic_pointer_cast<IntType>(type)) {
+            return std::to_string(value);
+        } else if (auto boolType = std::dynamic_pointer_cast<BoolType>(type)) {
+            return value ? "true" : "false";
+        } else if (auto ptrType = std::dynamic_pointer_cast<PointerType>(type)) {
+            return std::format("0x{:x}", 42);
+        } else {
+            throw std::runtime_error("unknown type");
+        }
+    }
 };
 
 using IntTypePtr = std::shared_ptr<IntType>;

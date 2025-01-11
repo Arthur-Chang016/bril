@@ -8,6 +8,7 @@
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <string>
+#include <unordered_map>
 #include <vector>
 using json = nlohmann::json;
 
@@ -19,10 +20,12 @@ class Function {
     ~Function() = default;
     friend std::ostream& operator<<(std::ostream& os, const Function& func);
     void ConstructCFG(std::vector<InstPtr>& instrs);
+    std::optional<int64_t> execute(std::unordered_map<std::string, RuntimeVal>& vars);
 
    private:
     std::string name;
     std::vector<VarPtr> args;
+    BBPtr entryBB = nullptr;
     std::vector<BBPtr> basicBlocks;
     TypePtr retType = nullptr;
 };

@@ -3,9 +3,12 @@
 
 #include <IR/Type.h>
 
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace ir {
@@ -15,12 +18,44 @@ using InstPtr = std::shared_ptr<Instruction>;
 
 std::ostream& operator<<(std::ostream& os, const Instruction& instr);
 
+// union of {return value} and {branch taken/not taken}
+class ctrlStatus {
+   public:
+    ctrlStatus(std::optional<int64_t> ret) : status(ret) {}
+    ctrlStatus(bool taken) : status(taken) {}
+
+    bool retValid() const {
+        return std::holds_alternative<std::optional<int64_t>>(status);
+    }
+
+    std::optional<int64_t> getRet() const {
+        return std::get<std::optional<int64_t>>(status);
+    }
+
+    bool getTaken() const {
+        return std::get<bool>(status);
+    }
+
+    ctrlStatus& operator=(const ctrlStatus& other) {
+        status = other.status;
+        return *this;
+    }
+
+   private:
+    std::variant<std::optional<int64_t>, bool> status;
+};
+
 class Instruction {
    public:
     Instruction() = default;
     virtual ~Instruction() = default;
     virtual std::ostream& print(std::ostream& os) const = 0;
     virtual bool isTerminator() const { return false; }
+
+    // return int64_t only when it's 'ret'
+    virtual ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) {
+        return false;  // default fall-through
+    }
 };
 
 class Label : public Instruction {
@@ -39,6 +74,11 @@ class Constant : public Instruction {
     Constant(VarPtr dest, int64_t val) : dest(dest), val(val) {}
     ~Constant() = default;
     std::ostream& print(std::ostream& os) const override;
+
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+        vars[dest->name] = RuntimeVal(dest->type, val);
+        return false;
+    }
 
    private:
     VarPtr dest;
@@ -66,6 +106,51 @@ class BinaryOp : public Instruction {
     ~BinaryOp() = default;
     std::ostream& print(std::ostream& os) const override;
 
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+        int64_t lhsVal = vars[lhs].value;
+        int64_t rhsVal = vars[rhs].value;
+        int64_t result;
+        switch (op) {
+            case Add:
+                result = lhsVal + rhsVal;
+                break;
+            case Sub:
+                result = lhsVal - rhsVal;
+                break;
+            case Mul:
+                result = lhsVal * rhsVal;
+                break;
+            case Div:
+                result = lhsVal / rhsVal;
+                break;
+            case And:
+                result = lhsVal & rhsVal;
+                break;
+            case Or:
+                result = lhsVal | rhsVal;
+                break;
+            case Eq:
+                result = lhsVal == rhsVal;
+                break;
+            case Lt:
+                result = lhsVal < rhsVal;
+                break;
+            case Gt:
+                result = lhsVal > rhsVal;
+                break;
+            case Le:
+                result = lhsVal <= rhsVal;
+                break;
+            case Ge:
+                result = lhsVal >= rhsVal;
+                break;
+            default:
+                throw std::runtime_error("Invalid binary operator");
+        }
+        vars[dest->name] = RuntimeVal(dest->type, result);
+        return false;  // return false for fall-through
+    }
+
    private:
     VarPtr dest;
     BinaryOpType op;
@@ -83,6 +168,20 @@ class UnaryOp : public Instruction {
     ~UnaryOp() = default;
     std::ostream& print(std::ostream& os) const override;
 
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+        int64_t srcVal = vars[src].value;
+        int64_t result;
+        switch (op) {
+            case Not:
+                result = !srcVal;
+                break;
+            default:
+                throw std::runtime_error("Invalid unary operator");
+        }
+        vars[dest->name] = RuntimeVal(dest->type, result);
+        return false;  // return false for fall-through
+    }
+
    private:
     VarPtr dest;
     UnaryOpType op;
@@ -97,6 +196,7 @@ class Jump : public Instruction {
     ~Jump() = default;
     std::ostream& print(std::ostream& os) const override;
     bool isTerminator() const override { return true; }
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override { return true; }
 
    private:
 };
@@ -110,6 +210,9 @@ class Branch : public Instruction {
     ~Branch() = default;
     std::ostream& print(std::ostream& os) const override;
     bool isTerminator() const override { return true; }
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+        return bool(vars[cond].value != 0);
+    }
 
    private:
 };
@@ -120,9 +223,16 @@ class Call : public Instruction {
     ~Call() = default;
     std::ostream& print(std::ostream& os) const override;
 
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+        // std::unordered_map<std::string, int64_t> newVars;
+
+        // TODO implement
+        return false;
+    }
+
    private:
-    VarPtr dest;  // might be nullptr
-    std::string func;
+    VarPtr dest;       // might be nullptr
+    std::string func;  // TODO change to FunctionWPtr
     std::vector<std::string> args;
 };
 
@@ -133,6 +243,12 @@ class Return : public Instruction {
     ~Return() = default;
     std::ostream& print(std::ostream& os) const override;
     bool isTerminator() const override { return true; }
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+        if (val)
+            return vars[*val].value;
+        else
+            return std::optional<int64_t>(std::nullopt);
+    }
 
    private:
     std::optional<std::string> val;
@@ -144,6 +260,13 @@ class Print : public Instruction {
     ~Print() = default;
     std::ostream& print(std::ostream& os) const override;
 
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+        for (const auto& arg : args)
+            std::cout << vars[arg].toString() << ' ';
+        std::cout << std::endl;
+        return false;
+    }
+
    private:
     std::vector<std::string> args;
 };
@@ -153,6 +276,11 @@ class Id : public Instruction {
     Id(VarPtr dest, std::string src) : dest(dest), src(src) {}
     ~Id() = default;
     std::ostream& print(std::ostream& os) const override;
+
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+        vars[dest->name] = RuntimeVal(dest->type, vars[src].value);
+        return false;
+    }
 
    private:
     VarPtr dest;
@@ -164,6 +292,14 @@ class Alloc : public Instruction {
     Alloc(VarPtr dest, std::string size) : dest(dest), size(size) {}
     ~Alloc() = default;
     std::ostream& print(std::ostream& os) const override;
+
+    ctrlStatus execute(std::unordered_map<std::string, RuntimeVal>& vars) override {
+        int64_t runtimeSize = vars[size].value;
+        // TODO add heap mem management
+
+        // vars[dest->name] = std::stoll(sizeInt);
+        return false;
+    }
 
    private:
     VarPtr dest;

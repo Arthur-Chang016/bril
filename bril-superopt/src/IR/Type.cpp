@@ -22,6 +22,7 @@ std::ostream& PointerType::print(std::ostream& os) const {
 }
 
 TypePtr ParseType(const json& typeJson) {
+    assert(typeJson != "void" && "Function return should be handled outside");
     if (typeJson.is_string()) {
         std::string type = typeJson;
         if (type == "int")
