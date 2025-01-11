@@ -26,4 +26,4 @@ bool HeapManager::boundCheck(int64_t *ptr) {
     return ptr < base + size && ptr >= base;
 }
 
-}  // namespace IR
+}  // namespace ir

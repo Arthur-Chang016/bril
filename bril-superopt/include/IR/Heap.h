@@ -19,6 +19,6 @@ class HeapManager {
     std::map<int64_t *, int> heap;
 };
 
-}  // namespace IR
+}  // namespace ir
 
 #endif  // IR_HEAP_H
