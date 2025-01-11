@@ -333,7 +333,7 @@ class Load : public Instruction {
     ctrlStatus execute(varContext& vars, HeapManager& heap) override {
         int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
         if (heap.boundCheck(addr) == false)
-            throw std::runtime_error(std::format("Uninitialized heap location and/or illegal offset : 0x{:x}", reinterpret_cast<uintptr_t>(addr)));
+            throw std::runtime_error(std::format("Load: Uninitialized heap location and/or illegal offset: 0x{:x}", reinterpret_cast<uintptr_t>(addr)));
         vars[dest->name] = RuntimeVal(dest->type, *addr);
         return false;
     }
@@ -349,6 +349,14 @@ class Store : public Instruction {
     ~Store() = default;
     std::ostream& print(std::ostream& os) const override;
 
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
+        int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
+        if (heap.boundCheck(addr) == false)
+            throw std::runtime_error(std::format("Store: Uninitialized heap location and/or illegal offset: 0x{:x}", reinterpret_cast<uintptr_t>(addr)));
+        *addr = vars[val].value;
+        return false;
+    }
+
    private:
     std::string ptr, val;
 };
@@ -358,6 +366,12 @@ class PtrAdd : public Instruction {
     PtrAdd(VarPtr dest, std::string ptr, std::string offset) : dest(dest), ptr(ptr), offset(offset) {}
     ~PtrAdd() = default;
     std::ostream& print(std::ostream& os) const override;
+
+    ctrlStatus execute(varContext& vars, HeapManager& heap) override {
+        int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
+        vars[dest->name] = RuntimeVal(dest->type, reinterpret_cast<int64_t>(addr) + vars[offset].value);
+        return false;
+    }
 
    private:
     VarPtr dest;
