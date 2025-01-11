@@ -16,9 +16,13 @@ namespace ir {
 
 class Program {
    public:
+    FuncPtr mainFunc = nullptr;
+
     Program(const json& progJson);
     ~Program() = default;
     void ConstructCallLink(const std::unordered_map<std::string, FuncWPtr>& name2func);
+    void SetupMainFunc(const std::unordered_map<std::string, FuncWPtr>& name2func);
+    varContext SetupVarContext(int argc, char** argv);
     friend std::ostream& operator<<(std::ostream& os, const Program& prog);
     void execute(varContext& vars, HeapManager& heap);
 

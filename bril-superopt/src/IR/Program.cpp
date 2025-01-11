@@ -27,6 +27,14 @@ void Program::ConstructCallLink(const std::unordered_map<std::string, FuncWPtr>&
     }
 }
 
+void Program::SetupMainFunc(const std::unordered_map<std::string, FuncWPtr>& name2func) {
+    if (auto it = name2func.find("main"); it != name2func.end()) {
+        this->mainFunc = it->second.lock();
+    } else {
+        throw std::runtime_error("Function 'main' not found");
+    }
+}
+
 Program::Program(const json& progJson) {
     if (!progJson.contains("functions"))
         throw std::runtime_error("progJson does not contain 'functions'");
@@ -36,6 +44,28 @@ Program::Program(const json& progJson) {
         name2func[functions.back()->name] = functions.back();
     }
     ConstructCallLink(name2func);
+    SetupMainFunc(name2func);
+}
+
+varContext Program::SetupVarContext(int argc, char** argv) {
+    assert(this->mainFunc && "mainFunc should be setup before setting up varContext");
+    if (this->mainFunc->args.size() != static_cast<std::size_t>(argc - 1)) throw std::runtime_error("error: mismatched main argument arity");
+
+    varContext vars;
+    for (int i = 1; i < argc; i++) {
+        auto symbol = this->mainFunc->args[i - 1];
+        auto valStr = std::string(argv[i]);
+        if (valStr == "true") {
+            vars[symbol->name] = RuntimeVal(std::make_shared<BoolType>(), 1);
+        } else if (valStr == "false") {
+            vars[symbol->name] = RuntimeVal(std::make_shared<BoolType>(), 1);
+        } else if (std::all_of(valStr.begin() + (valStr[0] == '-' ? 1 : 0), valStr.end(), ::isdigit)) {
+            vars[symbol->name] = RuntimeVal(std::make_shared<IntType>(), std::stoll(valStr));
+        } else {
+            throw std::runtime_error("error: invalid argument: " + valStr);
+        }
+    }
+    return vars;
 }
 
 std::ostream& operator<<(std::ostream& os, const Program& prog) {

@@ -1,12 +1,14 @@
+#include <IR/Heap.h>
 #include <IR/Parser.h>
 
 #include <iostream>
 
-int main() {
+int main(int argc, char** argv) {
     auto program = ir::parse(std::cin);
+    auto heap = ir::HeapManager();
+    auto vars = program->SetupVarContext(argc, argv);
 
-    std::cout << *program << std::endl;
+    program->execute(vars, heap);
 
-    // std::cout << "Hello, World!" << std::endl;
     return 0;
 }
