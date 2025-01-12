@@ -1,10 +1,14 @@
 #ifndef IR_TYPE_H
 #define IR_TYPE_H
 
+#include <cassert>
+#include <cpptrace/cpptrace.hpp>
 #include <format>
+#include <iostream>
 #include <memory>
 #include <nlohmann/json_fwd.hpp>
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <unordered_map>
 using json = nlohmann::json;
@@ -53,7 +57,9 @@ class RuntimeVal {
     int64_t value;
 
     RuntimeVal() = default;
-    RuntimeVal(TypePtr type, int64_t value) : type(std::move(type)), value(value) {}
+    RuntimeVal(TypePtr type, int64_t value) : type(std::move(type)), value(value) {
+        assert(this->type != nullptr && "Type cannot be null");
+    }
     ~RuntimeVal() = default;
 
     std::string toString() const {
@@ -64,7 +70,11 @@ class RuntimeVal {
         } else if (auto ptrType = std::dynamic_pointer_cast<PointerType>(type)) {
             return std::format("0x{:x}", 42);
         } else {
-            throw std::runtime_error("unknown type");
+            cpptrace::generate_trace().print();
+            if (type == nullptr)
+                throw std::runtime_error("Type is null");
+            else
+                throw std::runtime_error("Unknown type : " + (std::stringstream() << *type).str());
         }
     }
 };

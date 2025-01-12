@@ -14,7 +14,7 @@ if (CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -pedantic")
 endif()
 
-set(CMAKE_CXX_FLAGS_DEBUG "-fsanitize=address,undefined -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS_DEBUG "-fsanitize=address,undefined -fno-omit-frame-pointer -g -O0")
 
 file(GLOB_RECURSE SRC_FILES "${PROJECT_SOURCE_DIR}/src/IR/*.cpp")
 
@@ -25,15 +25,26 @@ FetchContent_Declare(json URL
         DOWNLOAD_EXTRACT_TIMESTAMP true)
 FetchContent_MakeAvailable(json)
 
+# Fetch the cpptrace library
+include(FetchContent)
+FetchContent_Declare(
+  cpptrace
+  GIT_REPOSITORY https://github.com/jeremy-rifkin/cpptrace.git
+  GIT_TAG        v0.7.5
+)
+FetchContent_MakeAvailable(cpptrace)
+
 # Add an executable for json2bril
 add_executable(json2bril ${SRC_FILES} "${PROJECT_SOURCE_DIR}/src/json2bril.cpp")
 target_include_directories(json2bril PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(json2bril PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(json2bril PRIVATE cpptrace::cpptrace)
 
 # Add an executable for brili
 add_executable(brili ${SRC_FILES} "${PROJECT_SOURCE_DIR}/src/brili.cpp")
 target_include_directories(brili PRIVATE ${PROJECT_SOURCE_DIR}/include)
 target_link_libraries(brili PRIVATE nlohmann_json::nlohmann_json)
+target_link_libraries(brili PRIVATE cpptrace::cpptrace)
 
 
 # (Optional) Installation instructions, if you plan to install your project

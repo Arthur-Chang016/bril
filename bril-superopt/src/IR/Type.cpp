@@ -30,12 +30,12 @@ TypePtr ParseType(const json& typeJson) {
         else if (type == "bool")
             return std::make_shared<BoolType>();
         else
-            throw std::runtime_error("Unknown type: " + type);
+            throw std::runtime_error("Parse unknown type string: " + type);
     } else if (typeJson.is_object()) {
         if (!typeJson.contains("ptr")) throw std::runtime_error("typeJson does not contain 'ptr'");
         return std::make_shared<PointerType>(ParseType(typeJson["ptr"]));
     } else {
-        throw std::runtime_error("Unknown type: " + typeJson.dump());
+        throw std::runtime_error("Parse unknown type: " + typeJson.dump());
     }
 }
 
