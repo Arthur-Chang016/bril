@@ -6,6 +6,7 @@
 namespace ir {
 
 int64_t *HeapManager::allocate(int size) {
+    if (size <= 0) throw std::runtime_error("error: must allocate a positive amount of memory: " + std::to_string(size));
     int64_t *ptr = new int64_t[size];
     heap[ptr] = size;
     return ptr;
