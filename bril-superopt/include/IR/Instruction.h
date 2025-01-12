@@ -248,7 +248,7 @@ class Return : public Instruction {
     bool isTerminator() const override { return true; }
     ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
         if (val)
-            return vars[*val].value;
+            return std::optional<int64_t>(vars[*val].value);  // could be int or bool or ptr<>
         else
             return std::optional<int64_t>(std::nullopt);
     }
@@ -265,7 +265,7 @@ class Print : public Instruction {
 
     ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
         for (const auto& arg : args)
-            std::cout << vars[arg].toString() << ' ';
+            std::cout << vars.at(arg).toString() << ' ';
         std::cout << std::endl;
         return false;
     }
