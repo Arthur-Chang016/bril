@@ -369,7 +369,7 @@ class PtrAdd : public Instruction {
 
     ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
         int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
-        vars[dest->name] = RuntimeVal(dest->type, reinterpret_cast<int64_t>(addr) + vars[offset].value);
+        vars[dest->name] = RuntimeVal(dest->type, reinterpret_cast<int64_t>(addr + vars[offset].value));
         return false;
     }
 

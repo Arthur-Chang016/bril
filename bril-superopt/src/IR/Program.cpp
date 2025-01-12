@@ -53,14 +53,23 @@ varContext Program::SetupVarContext(int argc, char** argv) {
 
     varContext vars;
     for (int i = 1; i < argc; i++) {
-        auto symbol = this->mainFunc->args[i - 1];
+        VarPtr symbol = this->mainFunc->args[i - 1];
         auto valStr = std::string(argv[i]);
         if (valStr == "true") {
-            vars[symbol->name] = RuntimeVal(std::make_shared<BoolType>(), 1);
+            if (auto boolType = std::dynamic_pointer_cast<BoolType>(symbol->type)) {
+                vars[symbol->name] = RuntimeVal(boolType, 1);
+            } else
+                throw std::runtime_error("error: invalid argument type, should be int: " + valStr);
         } else if (valStr == "false") {
-            vars[symbol->name] = RuntimeVal(std::make_shared<BoolType>(), 1);
+            if (auto boolType = std::dynamic_pointer_cast<BoolType>(symbol->type)) {
+                vars[symbol->name] = RuntimeVal(boolType, 0);
+            } else
+                throw std::runtime_error("error: invalid argument type, should be int: " + valStr);
         } else if (std::all_of(valStr.begin() + (valStr[0] == '-' ? 1 : 0), valStr.end(), ::isdigit)) {
-            vars[symbol->name] = RuntimeVal(std::make_shared<IntType>(), std::stoll(valStr));
+            if (auto intType = std::dynamic_pointer_cast<IntType>(symbol->type)) {
+                vars[symbol->name] = RuntimeVal(std::make_shared<IntType>(), std::stoll(valStr));
+            } else
+                throw std::runtime_error("error: invalid argument type, should be bool" + valStr);
         } else {
             throw std::runtime_error("error: invalid argument: " + valStr);
         }
