@@ -84,8 +84,10 @@ std::ostream& operator<<(std::ostream& os, const Program& prog) {
 }
 
 void Program::execute(varContext& vars, HeapManager& heap) {
-    for (const auto& func : functions)
-        func->execute(vars, heap);
+    if (this->mainFunc)
+        this->mainFunc->execute(vars, heap);
+    else
+        throw std::runtime_error("error: main function not found");
 }
 
 }  // namespace ir
