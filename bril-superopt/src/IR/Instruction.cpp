@@ -208,11 +208,12 @@ InstPtr ParseInstr(const json& instJson) {
         return std::make_shared<Branch>(cond, ifTrue, ifFalse);
     } else if (op == "call") {
         TypePtr type = instJson.contains("type") ? ParseType(instJson["type"]) : nullptr;
-        VarPtr dest = std::make_shared<Variable>(instJson["dest"], type);
+        VarPtr dest = type ? std::make_shared<Variable>(instJson["dest"], type) : nullptr;
         std::string func = instJson["funcs"].at(0);
         std::vector<std::string> args;
-        for (const auto& arg : instJson.at("args"))
-            args.push_back(arg);
+        if (instJson.contains("args"))
+            for (const auto& arg : instJson.at("args"))
+                args.push_back(arg);
         return std::make_shared<Call>(dest, func, std::move(args));
     } else if (op == "ret") {
         std::optional<std::string> ret = std::nullopt;
