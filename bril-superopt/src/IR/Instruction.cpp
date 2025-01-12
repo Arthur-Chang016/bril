@@ -117,6 +117,10 @@ std::ostream& Id::print(std::ostream& os) const {
     return os << *this->dest << " = id " << this->src << ";";
 }
 
+std::ostream& Nop::print(std::ostream& os) const {
+    return os << "nop;";
+}
+
 std::ostream& Alloc::print(std::ostream& os) const {
     return os << *this->dest << " = alloc " << this->size << ";";
 }
@@ -226,6 +230,8 @@ InstPtr ParseInstr(const json& instJson) {
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
         std::string src = instJson.at("args").at(0);
         return std::make_shared<Id>(dest, src);
+    } else if (op == "nop") {
+        return std::make_shared<Nop>();
     } else if (op == "alloc") {
         std::string d = instJson["dest"];
         TypePtr type = ParseType(instJson["type"]);

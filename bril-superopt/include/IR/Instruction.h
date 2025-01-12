@@ -290,6 +290,13 @@ class Id : public Instruction {
     std::string src;
 };
 
+class Nop : public Instruction {
+   public:
+    Nop() = default;
+    ~Nop() = default;
+    std::ostream& print(std::ostream& os) const override;
+};
+
 class Alloc : public Instruction {
    public:
     Alloc(VarPtr dest, std::string size) : dest(dest), size(size) {}
