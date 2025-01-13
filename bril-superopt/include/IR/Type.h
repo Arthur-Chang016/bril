@@ -87,7 +87,7 @@ class PointerType : public Type {
     }
 
    private:
-    TypePtr pointee;
+    const TypePtr pointee;
 
     static void hash_combine(std::size_t& seed, std::size_t hash) {
         seed ^= hash + 0x9e3779b9 + (seed << 6) + (seed >> 2);
@@ -139,8 +139,8 @@ using PointerTypePtr = std::shared_ptr<PointerType>;
 
 class Variable {
    public:
-    std::string name;
-    TypePtr type;
+    const std::string name;
+    const TypePtr type;
 
     Variable(std::string name, TypePtr type) : name(std::move(name)), type(type) {}
     virtual ~Variable() = default;
