@@ -173,7 +173,11 @@ bool Branch::isTerminator() const {
 }
 
 ctrlStatus Branch::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
-    return bool(vars[cond].value != 0);
+    return bool(vars[this->cond->name].value != 0);
+}
+
+std::vector<Variable> Branch::liveIn() {
+    return {*cond};
 }
 
 std::ostream& Call::print(std::ostream& os) const {
@@ -356,7 +360,7 @@ InstPtr ParseInstr(const json& instJson) {
         std::string label = instJson["labels"].at(0);
         return std::make_shared<Jump>(std::move(label));
     } else if (op == "br") {
-        std::string cond = instJson.at("args").at(0);
+        VarPtr cond = std::make_shared<Variable>(instJson.at("args").at(0), std::make_shared<BoolType>());
         std::string ifTrue = instJson["labels"].at(0), ifFalse = instJson["labels"].at(1);
         return std::make_shared<Branch>(cond, ifTrue, ifFalse);
     } else if (op == "call") {

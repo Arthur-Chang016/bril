@@ -150,14 +150,15 @@ class Jump : public Instruction {
 
 class Branch : public Instruction {
    public:
-    std::string cond;
+    VarPtr cond;
     std::string ifTrue, ifFalse;
 
-    Branch(std::string cond, std::string ifTrue, std::string ifFalse) : cond(cond), ifTrue(ifTrue), ifFalse(ifFalse) {}
+    Branch(VarPtr cond, std::string ifTrue, std::string ifFalse) : cond(cond), ifTrue(ifTrue), ifFalse(ifFalse) {}
     ~Branch() = default;
     std::ostream& print(std::ostream& os) const override;
     bool isTerminator() const override;
     ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
+    std::vector<Variable> liveIn() override;
 
    private:
 };
