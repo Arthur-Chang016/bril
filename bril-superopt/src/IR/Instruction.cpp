@@ -32,6 +32,11 @@ std::ostream& Constant::print(std::ostream& os) const {
     }
 }
 
+ctrlStatus Constant::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    vars[dest->name] = RuntimeVal(dest->type, val);
+    return false;
+}
+
 std::ostream& BinaryOp::print(std::ostream& os) const {
     return os << *this->dest << " = " << [&]() {
         switch (this->op) {
@@ -64,6 +69,51 @@ std::ostream& BinaryOp::print(std::ostream& os) const {
               << " " << this->rhs << ";";
 }
 
+ctrlStatus BinaryOp::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    int64_t lhsVal = vars[lhs].value;
+    int64_t rhsVal = vars[rhs].value;
+    int64_t result;
+    switch (op) {
+        case Add:
+            result = lhsVal + rhsVal;
+            break;
+        case Sub:
+            result = lhsVal - rhsVal;
+            break;
+        case Mul:
+            result = lhsVal * rhsVal;
+            break;
+        case Div:
+            result = lhsVal / rhsVal;
+            break;
+        case And:
+            result = lhsVal & rhsVal;
+            break;
+        case Or:
+            result = lhsVal | rhsVal;
+            break;
+        case Eq:
+            result = lhsVal == rhsVal;
+            break;
+        case Lt:
+            result = lhsVal < rhsVal;
+            break;
+        case Gt:
+            result = lhsVal > rhsVal;
+            break;
+        case Le:
+            result = lhsVal <= rhsVal;
+            break;
+        case Ge:
+            result = lhsVal >= rhsVal;
+            break;
+        default:
+            throw std::runtime_error("Invalid binary operator");
+    }
+    vars[dest->name] = RuntimeVal(dest->type, result);
+    return false;  // return false for fall-through
+}
+
 std::ostream& UnaryOp::print(std::ostream& os) const {
     return os << *this->dest << " = " << [&]() {
         switch (this->op) {
@@ -76,12 +126,42 @@ std::ostream& UnaryOp::print(std::ostream& os) const {
               << ";";
 }
 
+ctrlStatus UnaryOp::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    int64_t srcVal = vars[src].value;
+    int64_t result;
+    switch (op) {
+        case Not:
+            result = !srcVal;
+            break;
+        default:
+            throw std::runtime_error("Invalid unary operator");
+    }
+    vars[dest->name] = RuntimeVal(dest->type, result);
+    return false;  // return false for fall-through
+}
+
 std::ostream& Jump::print(std::ostream& os) const {
     return os << "jmp ." << this->target << ";";
 }
 
+bool Jump::isTerminator() const {
+    return true;
+}
+
+ctrlStatus Jump::execute([[maybe_unused]] varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    return true;
+}
+
 std::ostream& Branch::print(std::ostream& os) const {
     return os << "br " << this->cond << " ." << this->ifTrue << " ." << this->ifFalse << ";";
+}
+
+bool Branch::isTerminator() const {
+    return true;
+}
+
+ctrlStatus Branch::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    return bool(vars[cond].value != 0);
 }
 
 std::ostream& Call::print(std::ostream& os) const {
@@ -107,14 +187,37 @@ std::ostream& Return::print(std::ostream& os) const {
     return os << "ret" << (this->val ? " " + this->val.value() : "") << ";";
 }
 
+bool Return::isTerminator() const {
+    return true;
+}
+
+ctrlStatus Return::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    if (val)
+        return std::optional<int64_t>(vars[*val].value);  // could be int or bool or ptr<>
+    else
+        return std::optional<int64_t>(std::nullopt);
+}
+
 std::ostream& Print::print(std::ostream& os) const {
     os << "print";
     for (const auto& arg : this->args) os << " " << arg;
     return os << ";";
 }
 
+ctrlStatus Print::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    for (const auto& arg : this->args)
+        std::cout << vars.at(arg).toString() << ' ';
+    std::cout << std::endl;
+    return false;
+}
+
 std::ostream& Id::print(std::ostream& os) const {
     return os << *this->dest << " = id " << this->src << ";";
+}
+
+ctrlStatus Id::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    vars[dest->name] = RuntimeVal(dest->type, vars[src].value);
+    return false;
 }
 
 std::ostream& Nop::print(std::ostream& os) const {
@@ -125,20 +228,55 @@ std::ostream& Alloc::print(std::ostream& os) const {
     return os << *this->dest << " = alloc " << this->size << ";";
 }
 
+ctrlStatus Alloc::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    int64_t runtimeSize = vars[size].value;
+    int64_t* ptr = heap.allocate(runtimeSize);
+    vars[dest->name] = RuntimeVal(dest->type, reinterpret_cast<int64_t>(ptr));
+    return false;
+}
+
 std::ostream& Free::print(std::ostream& os) const {
     return os << "free " << this->site << ";";
+}
+
+ctrlStatus Free::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    int64_t* ptr = reinterpret_cast<int64_t*>(vars[site].value);
+    heap.deallocate(ptr);
+    return false;
 }
 
 std::ostream& Load::print(std::ostream& os) const {
     return os << *this->dest << " = load " << this->ptr << ";";
 }
 
+ctrlStatus Load::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
+    if (heap.boundCheck(addr) == false)
+        throw std::runtime_error(std::format("Load: Uninitialized heap location and/or illegal offset: 0x{:x}", reinterpret_cast<uintptr_t>(addr)));
+    vars[dest->name] = RuntimeVal(dest->type, *addr);
+    return false;
+}
+
 std::ostream& Store::print(std::ostream& os) const {
     return os << "store " << this->ptr << " " << this->val << ";";
 }
 
+ctrlStatus Store::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
+    if (heap.boundCheck(addr) == false)
+        throw std::runtime_error(std::format("Store: Uninitialized heap location and/or illegal offset: 0x{:x}", reinterpret_cast<uintptr_t>(addr)));
+    *addr = vars[val].value;
+    return false;
+}
+
 std::ostream& PtrAdd::print(std::ostream& os) const {
     return os << *this->dest << " = ptradd " << this->ptr << " " << this->offset << ";";
+}
+
+ctrlStatus PtrAdd::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
+    int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
+    vars[dest->name] = RuntimeVal(dest->type, reinterpret_cast<int64_t>(addr + vars[offset].value));
+    return false;
 }
 
 BinaryOpType StrToBinOp(const std::string& op) {

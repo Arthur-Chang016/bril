@@ -79,11 +79,7 @@ class Constant : public Instruction {
     Constant(VarPtr dest, int64_t val) : dest(dest), val(val) {}
     ~Constant() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        vars[dest->name] = RuntimeVal(dest->type, val);
-        return false;
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     VarPtr dest;
@@ -110,51 +106,7 @@ class BinaryOp : public Instruction {
     BinaryOp(BinaryOpType op, VarPtr dest, std::string lhs, std::string rhs) : dest(dest), op(op), lhs(lhs), rhs(rhs) {}
     ~BinaryOp() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        int64_t lhsVal = vars[lhs].value;
-        int64_t rhsVal = vars[rhs].value;
-        int64_t result;
-        switch (op) {
-            case Add:
-                result = lhsVal + rhsVal;
-                break;
-            case Sub:
-                result = lhsVal - rhsVal;
-                break;
-            case Mul:
-                result = lhsVal * rhsVal;
-                break;
-            case Div:
-                result = lhsVal / rhsVal;
-                break;
-            case And:
-                result = lhsVal & rhsVal;
-                break;
-            case Or:
-                result = lhsVal | rhsVal;
-                break;
-            case Eq:
-                result = lhsVal == rhsVal;
-                break;
-            case Lt:
-                result = lhsVal < rhsVal;
-                break;
-            case Gt:
-                result = lhsVal > rhsVal;
-                break;
-            case Le:
-                result = lhsVal <= rhsVal;
-                break;
-            case Ge:
-                result = lhsVal >= rhsVal;
-                break;
-            default:
-                throw std::runtime_error("Invalid binary operator");
-        }
-        vars[dest->name] = RuntimeVal(dest->type, result);
-        return false;  // return false for fall-through
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     VarPtr dest;
@@ -172,20 +124,7 @@ class UnaryOp : public Instruction {
     UnaryOp(UnaryOpType op, VarPtr dest, std::string src) : dest(dest), op(op), src(src) {}
     ~UnaryOp() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        int64_t srcVal = vars[src].value;
-        int64_t result;
-        switch (op) {
-            case Not:
-                result = !srcVal;
-                break;
-            default:
-                throw std::runtime_error("Invalid unary operator");
-        }
-        vars[dest->name] = RuntimeVal(dest->type, result);
-        return false;  // return false for fall-through
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     VarPtr dest;
@@ -200,8 +139,8 @@ class Jump : public Instruction {
     Jump(std::string target) : target(target) {}
     ~Jump() = default;
     std::ostream& print(std::ostream& os) const override;
-    bool isTerminator() const override { return true; }
-    ctrlStatus execute([[maybe_unused]] varContext& vars, [[maybe_unused]] HeapManager& heap) override { return true; }
+    bool isTerminator() const override;
+    ctrlStatus execute([[maybe_unused]] varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
 };
@@ -214,10 +153,8 @@ class Branch : public Instruction {
     Branch(std::string cond, std::string ifTrue, std::string ifFalse) : cond(cond), ifTrue(ifTrue), ifFalse(ifFalse) {}
     ~Branch() = default;
     std::ostream& print(std::ostream& os) const override;
-    bool isTerminator() const override { return true; }
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        return bool(vars[cond].value != 0);
-    }
+    bool isTerminator() const override;
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
 };
@@ -247,13 +184,8 @@ class Return : public Instruction {
     Return(std::string val) : val(std::move(val)) {}
     ~Return() = default;
     std::ostream& print(std::ostream& os) const override;
-    bool isTerminator() const override { return true; }
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        if (val)
-            return std::optional<int64_t>(vars[*val].value);  // could be int or bool or ptr<>
-        else
-            return std::optional<int64_t>(std::nullopt);
-    }
+    bool isTerminator() const override;
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     std::optional<std::string> val;
@@ -264,13 +196,7 @@ class Print : public Instruction {
     Print(std::vector<std::string> args) : args(std::move(args)) {}
     ~Print() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        for (const auto& arg : args)
-            std::cout << vars.at(arg).toString() << ' ';
-        std::cout << std::endl;
-        return false;
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     std::vector<std::string> args;
@@ -281,11 +207,7 @@ class Id : public Instruction {
     Id(VarPtr dest, std::string src) : dest(dest), src(src) {}
     ~Id() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        vars[dest->name] = RuntimeVal(dest->type, vars[src].value);
-        return false;
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     VarPtr dest;
@@ -304,13 +226,7 @@ class Alloc : public Instruction {
     Alloc(VarPtr dest, std::string size) : dest(dest), size(size) {}
     ~Alloc() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        int64_t runtimeSize = vars[size].value;
-        int64_t* ptr = heap.allocate(runtimeSize);
-        vars[dest->name] = RuntimeVal(dest->type, reinterpret_cast<int64_t>(ptr));
-        return false;
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     VarPtr dest;
@@ -322,12 +238,7 @@ class Free : public Instruction {
     Free(std::string site) : site(site) {}
     ~Free() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        int64_t* ptr = reinterpret_cast<int64_t*>(vars[site].value);
-        heap.deallocate(ptr);
-        return false;
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     std::string site;
@@ -338,14 +249,7 @@ class Load : public Instruction {
     Load(VarPtr dest, std::string ptr) : dest(dest), ptr(ptr) {}
     ~Load() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
-        if (heap.boundCheck(addr) == false)
-            throw std::runtime_error(std::format("Load: Uninitialized heap location and/or illegal offset: 0x{:x}", reinterpret_cast<uintptr_t>(addr)));
-        vars[dest->name] = RuntimeVal(dest->type, *addr);
-        return false;
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     VarPtr dest;
@@ -357,14 +261,7 @@ class Store : public Instruction {
     Store(std::string ptr, std::string val) : ptr(ptr), val(val) {}
     ~Store() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
-        if (heap.boundCheck(addr) == false)
-            throw std::runtime_error(std::format("Store: Uninitialized heap location and/or illegal offset: 0x{:x}", reinterpret_cast<uintptr_t>(addr)));
-        *addr = vars[val].value;
-        return false;
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     std::string ptr, val;
@@ -375,12 +272,7 @@ class PtrAdd : public Instruction {
     PtrAdd(VarPtr dest, std::string ptr, std::string offset) : dest(dest), ptr(ptr), offset(offset) {}
     ~PtrAdd() = default;
     std::ostream& print(std::ostream& os) const override;
-
-    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override {
-        int64_t* addr = reinterpret_cast<int64_t*>(vars[ptr].value);
-        vars[dest->name] = RuntimeVal(dest->type, reinterpret_cast<int64_t>(addr + vars[offset].value));
-        return false;
-    }
+    ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
 
    private:
     VarPtr dest;
