@@ -54,6 +54,8 @@ class Instruction {
     virtual ~Instruction() = default;
     virtual std::ostream& print(std::ostream& os) const = 0;
     virtual bool isTerminator() const { return false; }
+    // virtual std::vector<std::string> liveIn() { return {}; }
+    // virtual std::vector<std::string> liveOut() { return {}; }
 
     // return int64_t only when it's 'ret'
     virtual ctrlStatus execute([[maybe_unused]] varContext& vars, [[maybe_unused]] HeapManager& heap) {

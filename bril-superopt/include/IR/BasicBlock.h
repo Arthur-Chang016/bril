@@ -26,6 +26,8 @@ class BasicBlock {
     ~BasicBlock() = default;
     friend std::ostream& operator<<(std::ostream& os, const BasicBlock& bb);
     ctrlStatus execute(varContext& vars, HeapManager& heap);
+    //  std::vector<std::string> liveIn();
+    //  std::vector<std::string> liveOut();
 
    private:
 };

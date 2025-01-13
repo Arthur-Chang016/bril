@@ -3,7 +3,7 @@
 
 #include <iostream>
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
     auto program = ir::parse(std::cin);
     auto heap = ir::HeapManager();
     auto vars = program->SetupVarContext(argc, argv);
