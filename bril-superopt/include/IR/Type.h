@@ -142,7 +142,9 @@ class Variable {
     const std::string name;
     const TypePtr type;
 
-    Variable(std::string name, TypePtr type) : name(std::move(name)), type(type) {}
+    Variable(std::string name, TypePtr type) : name(std::move(name)), type(type) {
+        assert(type != nullptr && "Type cannot be null");
+    }
     virtual ~Variable() = default;
 
     friend std::ostream& operator<<(std::ostream& os, const Variable& var) {

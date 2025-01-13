@@ -80,6 +80,7 @@ class Constant : public Instruction {
     ~Constant() = default;
     std::ostream& print(std::ostream& os) const override;
     ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
+    std::vector<Variable> liveOut() override;
 
    private:
     VarPtr dest;
@@ -103,15 +104,17 @@ enum BinaryOpType {
 
 class BinaryOp : public Instruction {
    public:
-    BinaryOp(BinaryOpType op, VarPtr dest, std::string lhs, std::string rhs) : dest(dest), op(op), lhs(lhs), rhs(rhs) {}
+    BinaryOp(BinaryOpType op, VarPtr dest, VarPtr lhs, VarPtr rhs) : dest(dest), op(op), lhs(lhs), rhs(rhs) {}
     ~BinaryOp() = default;
     std::ostream& print(std::ostream& os) const override;
     ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
+    std::vector<Variable> liveIn() override;
+    std::vector<Variable> liveOut() override;
 
    private:
     VarPtr dest;
     BinaryOpType op;
-    std::string lhs, rhs;
+    VarPtr lhs, rhs;
 };
 
 enum UnaryOpType {
@@ -121,7 +124,7 @@ enum UnaryOpType {
 
 class UnaryOp : public Instruction {
    public:
-    UnaryOp(UnaryOpType op, VarPtr dest, std::string src) : dest(dest), op(op), src(src) {}
+    UnaryOp(UnaryOpType op, VarPtr dest, VarPtr src) : dest(dest), op(op), src(src) {}
     ~UnaryOp() = default;
     std::ostream& print(std::ostream& os) const override;
     ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
@@ -129,7 +132,7 @@ class UnaryOp : public Instruction {
    private:
     VarPtr dest;
     UnaryOpType op;
-    std::string src;
+    VarPtr src;
 };
 
 class Jump : public Instruction {
@@ -279,9 +282,9 @@ class PtrAdd : public Instruction {
     std::string ptr, offset;
 };
 
-BinaryOpType StrToBinOp(const std::string& op);
+std::pair<BinaryOpType, TypePtr> StrToBinOp(const std::string& op);
 
-UnaryOpType StrToUnOp(const std::string& op);
+std::pair<UnaryOpType, TypePtr> StrToUnOp(const std::string& op);
 
 InstPtr ParseInstr(const json& instJson);
 

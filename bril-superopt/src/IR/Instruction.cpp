@@ -37,6 +37,10 @@ ctrlStatus Constant::execute(varContext& vars, [[maybe_unused]] HeapManager& hea
     return false;
 }
 
+std::vector<Variable> Constant::liveOut() {
+    return {*dest};
+}
+
 std::ostream& BinaryOp::print(std::ostream& os) const {
     return os << *this->dest << " = " << [&]() {
         switch (this->op) {
@@ -69,9 +73,17 @@ std::ostream& BinaryOp::print(std::ostream& os) const {
               << " " << this->rhs << ";";
 }
 
+std::vector<Variable> BinaryOp::liveIn() {
+    return {*lhs, *rhs};
+}
+
+std::vector<Variable> BinaryOp::liveOut() {
+    return {*dest};
+}
+
 ctrlStatus BinaryOp::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
-    int64_t lhsVal = vars[lhs].value;
-    int64_t rhsVal = vars[rhs].value;
+    int64_t lhsVal = vars[this->lhs->name].value;
+    int64_t rhsVal = vars[this->rhs->name].value;
     int64_t result;
     switch (op) {
         case Add:
@@ -127,7 +139,7 @@ std::ostream& UnaryOp::print(std::ostream& os) const {
 }
 
 ctrlStatus UnaryOp::execute(varContext& vars, [[maybe_unused]] HeapManager& heap) {
-    int64_t srcVal = vars[src].value;
+    int64_t srcVal = vars[this->src->name].value;
     int64_t result;
     switch (op) {
         case Not:
@@ -279,38 +291,40 @@ ctrlStatus PtrAdd::execute(varContext& vars, [[maybe_unused]] HeapManager& heap)
     return false;
 }
 
-BinaryOpType StrToBinOp(const std::string& op) {
+// return {BinaryOpType, operand type}
+std::pair<BinaryOpType, TypePtr> StrToBinOp(const std::string& op) {
     if (op == "add")
-        return BinaryOpType::Add;
+        return {BinaryOpType::Add, std::make_shared<IntType>()};
     else if (op == "sub")
-        return BinaryOpType::Sub;
+        return {BinaryOpType::Sub, std::make_shared<IntType>()};
     else if (op == "mul")
-        return BinaryOpType::Mul;
+        return {BinaryOpType::Mul, std::make_shared<IntType>()};
     else if (op == "div")
-        return BinaryOpType::Div;
+        return {BinaryOpType::Div, std::make_shared<IntType>()};
     else if (op == "and")
-        return BinaryOpType::And;
+        return {BinaryOpType::And, std::make_shared<BoolType>()};
     else if (op == "or")
-        return BinaryOpType::Or;
+        return {BinaryOpType::Or, std::make_shared<BoolType>()};
     else if (op == "eq")
-        return BinaryOpType::Eq;
+        return {BinaryOpType::Eq, std::make_shared<IntType>()};
     else if (op == "lt")
-        return BinaryOpType::Lt;
+        return {BinaryOpType::Lt, std::make_shared<IntType>()};
     else if (op == "gt")
-        return BinaryOpType::Gt;
+        return {BinaryOpType::Gt, std::make_shared<IntType>()};
     else if (op == "le")
-        return BinaryOpType::Le;
+        return {BinaryOpType::Le, std::make_shared<IntType>()};
     else if (op == "ge")
-        return BinaryOpType::Ge;
+        return {BinaryOpType::Ge, std::make_shared<IntType>()};
     else
-        return BinaryOpType::BinInvalid;
+        return {BinaryOpType::BinInvalid, nullptr};
 }
 
-UnaryOpType StrToUnOp(const std::string& op) {
+// return {UnaryOpType, operand type}
+std::pair<UnaryOpType, TypePtr> StrToUnOp(const std::string& op) {
     if (op == "not")
-        return UnaryOpType::Not;
+        return {UnaryOpType::Not, std::make_shared<BoolType>()};
     else
-        return UnaryOpType::UnInvalid;
+        return {UnaryOpType::UnInvalid, nullptr};
 }
 
 InstPtr ParseInstr(const json& instJson) {
@@ -325,16 +339,17 @@ InstPtr ParseInstr(const json& instJson) {
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
         int64_t value = instJson["value"].is_number_integer() ? int64_t(instJson["value"]) : int64_t(bool(instJson["value"]));
         return std::make_shared<Constant>(dest, value);
-    } else if (BinaryOpType binOp = StrToBinOp(op); binOp != BinaryOpType::BinInvalid) {
+    } else if (auto [binOp, argType] = StrToBinOp(op); binOp != BinaryOpType::BinInvalid) {
         std::string d = instJson["dest"];
         TypePtr type = ParseType(instJson["type"]);
-        std::string lhs = instJson.at("args").at(0), rhs = instJson.at("args").at(1);
+        VarPtr lhs = std::make_shared<Variable>(instJson.at("args").at(0), argType);
+        VarPtr rhs = std::make_shared<Variable>(instJson.at("args").at(1), argType);
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
         return std::make_shared<BinaryOp>(binOp, dest, lhs, rhs);
-    } else if (UnaryOpType unOp = StrToUnOp(op); unOp != UnaryOpType::UnInvalid) {
+    } else if (auto [unOp, argType] = StrToUnOp(op); unOp != UnaryOpType::UnInvalid) {
         std::string d = instJson["dest"];
         TypePtr type = ParseType(instJson["type"]);
-        std::string src = instJson.at("args").at(0);
+        VarPtr src = std::make_shared<Variable>(instJson.at("args").at(0), argType);
         VarPtr dest = std::make_shared<Variable>(std::move(d), type);
         return std::make_shared<UnaryOp>(unOp, dest, src);
     } else if (op == "jmp") {
