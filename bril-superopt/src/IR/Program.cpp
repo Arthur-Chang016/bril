@@ -11,6 +11,15 @@ using json = nlohmann::json;
 
 namespace ir {
 
+void ConstructCallArgs(std::shared_ptr<ir::Call> callInst, FuncPtr func) {
+    assert(func->args.size() == callInst->args.size() && "Mismatched argument arity");
+    std::vector<VarPtr> argsVar;
+    for (size_t i = 0; i < callInst->args.size(); ++i) {
+        argsVar.push_back(std::make_shared<Variable>(callInst->args[i], func->args[i]->type));
+    }
+    callInst->argsVar = std::move(argsVar);
+}
+
 void Program::ConstructCallLink(const std::unordered_map<std::string, FuncWPtr>& name2func) {
     for (auto& func : this->functions) {
         for (auto& bb : func->basicBlocks) {
@@ -18,6 +27,7 @@ void Program::ConstructCallLink(const std::unordered_map<std::string, FuncWPtr>&
                 if (auto callInst = std::dynamic_pointer_cast<Call>(inst)) {
                     if (auto it = name2func.find(callInst->funcName); it != name2func.end()) {
                         callInst->func = it->second;
+                        ConstructCallArgs(callInst, it->second.lock());
                     } else {
                         throw std::runtime_error("Function " + callInst->funcName + " not found");
                     }

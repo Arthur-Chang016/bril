@@ -169,17 +169,20 @@ using FuncWPtr = std::weak_ptr<Function>;
 
 class Call : public Instruction {
    public:
-    std::string funcName;
+    const VarPtr dest;  // might be nullptr
+    const std::string funcName;
     FuncWPtr func;
+    const std::vector<std::string> args;
+    std::vector<VarPtr> argsVar;
 
-    Call(VarPtr dest, std::string funcName, std::vector<std::string> args) : funcName(std::move(funcName)), dest(dest), args(std::move(args)) {}
+    Call(VarPtr dest, std::string funcName, std::vector<std::string> args) : dest(dest), funcName(std::move(funcName)), args(std::move(args)) {}
     ~Call() = default;
     std::ostream& print(std::ostream& os) const override;
     ctrlStatus execute(varContext& vars, [[maybe_unused]] HeapManager& heap) override;
+    std::vector<Variable> liveIn() override;
+    std::vector<Variable> liveOut() override;
 
    private:
-    VarPtr dest;  // might be nullptr
-    std::vector<std::string> args;
 };
 
 class Return : public Instruction {

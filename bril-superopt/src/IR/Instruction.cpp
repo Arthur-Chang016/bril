@@ -199,6 +199,17 @@ ctrlStatus Call::execute(varContext& vars, HeapManager& heap) {
     return false;
 }
 
+std::vector<Variable> Call::liveIn() {
+    std::vector<Variable> liveIn;
+    for (const auto& arg : this->argsVar) liveIn.push_back(*arg);
+    return liveIn;
+}
+
+std::vector<Variable> Call::liveOut() {
+    if (this->dest) return {*dest};
+    return {};
+}
+
 std::ostream& Return::print(std::ostream& os) const {
     return os << "ret" << (this->val ? " " + this->val.value() : "") << ";";
 }
