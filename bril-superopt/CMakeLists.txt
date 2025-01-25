@@ -34,17 +34,18 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(cpptrace)
 
+add_library(bril-ir ${SRC_FILES})
+target_include_directories(bril-ir PUBLIC ${PROJECT_SOURCE_DIR}/include)
+target_link_libraries(bril-ir PUBLIC nlohmann_json::nlohmann_json)
+target_link_libraries(bril-ir PUBLIC cpptrace::cpptrace)
+
 # Add an executable for json2bril
-add_executable(json2bril ${SRC_FILES} "${PROJECT_SOURCE_DIR}/src/json2bril.cpp")
-target_include_directories(json2bril PRIVATE ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(json2bril PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(json2bril PRIVATE cpptrace::cpptrace)
+add_executable(json2bril "${PROJECT_SOURCE_DIR}/src/json2bril.cpp")
+target_link_libraries(json2bril PRIVATE bril-ir)
 
 # Add an executable for brili
-add_executable(brili ${SRC_FILES} "${PROJECT_SOURCE_DIR}/src/brili.cpp")
-target_include_directories(brili PRIVATE ${PROJECT_SOURCE_DIR}/include)
-target_link_libraries(brili PRIVATE nlohmann_json::nlohmann_json)
-target_link_libraries(brili PRIVATE cpptrace::cpptrace)
+add_executable(brili "${PROJECT_SOURCE_DIR}/src/brili.cpp")
+target_link_libraries(brili PRIVATE bril-ir)
 
 
 # (Optional) Installation instructions, if you plan to install your project
