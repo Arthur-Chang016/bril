@@ -63,6 +63,13 @@ class Instruction {
     }
 };
 
+class CoreComputeInst : public Instruction {
+   public:
+    CoreComputeInst() = default;
+    ~CoreComputeInst() = default;
+    std::ostream& print(std::ostream& os) const override = 0;
+};
+
 class Label : public Instruction {
    public:
     std::string name;
@@ -74,7 +81,7 @@ class Label : public Instruction {
    private:
 };
 
-class Constant : public Instruction {
+class Constant : public CoreComputeInst {
    public:
     Constant(VarPtr dest, int64_t val) : dest(dest), val(val) {}
     ~Constant() = default;
@@ -102,7 +109,7 @@ enum BinaryOpType {
     BinInvalid,
 };
 
-class BinaryOp : public Instruction {
+class BinaryOp : public CoreComputeInst {
    public:
     BinaryOp(BinaryOpType op, VarPtr dest, VarPtr lhs, VarPtr rhs) : dest(dest), op(op), lhs(lhs), rhs(rhs) {}
     ~BinaryOp() = default;
@@ -122,7 +129,7 @@ enum UnaryOpType {
     UnInvalid
 };
 
-class UnaryOp : public Instruction {
+class UnaryOp : public CoreComputeInst {
    public:
     UnaryOp(UnaryOpType op, VarPtr dest, VarPtr src) : dest(dest), op(op), src(src) {}
     ~UnaryOp() = default;
@@ -209,7 +216,7 @@ class Print : public Instruction {
     std::vector<std::string> args;
 };
 
-class Id : public Instruction {
+class Id : public CoreComputeInst {
    public:
     Id(VarPtr dest, std::string src) : dest(dest), src(src) {}
     ~Id() = default;
