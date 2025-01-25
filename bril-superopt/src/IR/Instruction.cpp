@@ -69,8 +69,8 @@ std::ostream& BinaryOp::print(std::ostream& os) const {
             default:
                 throw std::runtime_error("Invalid BinaryOpType: " + std::to_string(static_cast<int>(this->op)));
         }
-    }() << " " << this->lhs
-              << " " << this->rhs << ";";
+    }() << " " << this->lhs->name
+              << " " << this->rhs->name << ";";
 }
 
 std::vector<Variable> BinaryOp::liveIn() {
@@ -134,7 +134,7 @@ std::ostream& UnaryOp::print(std::ostream& os) const {
             default:
                 throw std::runtime_error("Invalid UnaryOpType: " + std::to_string(static_cast<int>(this->op)));
         }
-    }() << " " << this->src
+    }() << " " << this->src->name
               << ";";
 }
 
@@ -165,7 +165,7 @@ ctrlStatus Jump::execute([[maybe_unused]] varContext& vars, [[maybe_unused]] Hea
 }
 
 std::ostream& Branch::print(std::ostream& os) const {
-    return os << "br " << this->cond << " ." << this->ifTrue << " ." << this->ifFalse << ";";
+    return os << "br " << this->cond->name << " ." << this->ifTrue << " ." << this->ifFalse << ";";
 }
 
 bool Branch::isTerminator() const {
